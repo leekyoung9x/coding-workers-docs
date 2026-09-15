@@ -10,7 +10,7 @@
 
 | STT | Dedicated Worker | CLI Binary | Backend Model | Endpoint Đấu nối | Loại Task Tối ưu Nhất | Khi nào KHÔNG nên dùng |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Muse Code** | `~/.local/bin/muse` (v1.2.1) | `meta/muse-spark-1.3-contributor` (`xhigh`) | OpenRouter qua `muse-shim :8787` | **Tính năng Unity Client C#**, UI uGUI Prefab, sửa lỗi logic Combat, bài toán dài hơi (>20 turns). | Task script nhỏ 1 file, sửa backend Python/Nodejs. |
+| **1** | **Muse Code** | `~/.local/bin/muse` (v1.2.1) | Meta Muse Spark 1.3 | **Native Meta Sub (130k)** *(Fallback: `muse-shim`)* | **Tính năng Unity Client C#**, UI uGUI Prefab, sửa lỗi logic Combat, bài toán dài hơi (>20 turns). | Task script nhỏ 1 file, sửa backend Python/Nodejs. |
 | **2** | **mini-SWE-agent** | `~/.local/bin/mini` (v2.4.6) | `thtung-paid` (`deepseek-v4.1-flash`) | 9Router VPS (`router.cutes1tg.online`) | **Tính năng Backend** (.NET CleanArch, Colyseus TS, Go), bugfix nhanh, refactor repo vừa (<50 files). Tốc độ 28s/task. | Code Unity cần verify editor compiler; task cần TUI tương tác. |
 | **3** | **OpenCode CLI** | `/opt/homebrew/bin/opencode` (v1.18.31) | `thtung-glm` (`glm-5.3-flash`) | 9Router VPS (`router.cutes1tg.online`) | **Review PR chéo**, đọc hiểu repo rộng (200k context), rà soát dependencies, refactor đa file. | Task chạy bash độc lập không cần context rộng. |
 | **4** | **Codex CLI** | `~/.local/bin/codex` (v0.147.0) | `gpt-5.6-sol` / GPT models | OpenAI Native OAuth (`~/.codex/auth.json`) | **Thiết kế kiến trúc hệ thống**, viết core engine, review bảo mật và chất lượng code pre-commit. | Task cần tiết kiệm chi phí tối đa (dùng DeepSeek/GLM thay thế). |
@@ -34,17 +34,15 @@
 
 ### 3.1. Worker 1: Muse Code (Chuyên gia Unity Client & C#)
 
-#### A. Lệnh chạy headless chuẩn qua Hermes:
+#### A. Lệnh chạy headless chuẩn qua Hermes (Dùng gói sub native Meta):
 ```bash
-META_API_KEY=local-shim-placeholder muse exec \
-  --provider meta \
-  --base-url http://127.0.0.1:8787 \
-  --model meta/muse-spark-1.3-contributor \
-  --reasoning-effort xhigh \
+muse exec \
   --yolo \
+  --reasoning-effort medium \
   --workspace "/Users/leekyoung9x/Downloads/pokiwar/pokiguard_client" \
   "<Yêu cầu code C# kèm spec>"
 ```
+*(Reasoning effort do Hermes tự kiểm soát: `medium` cho task thường/nhẹ, `high` cho tính năng mới, `xhigh` chỉ dùng khi gặp thuật toán cực khó).*
 
 #### B. Vòng lặp tự động sửa lỗi của Muse (Feedback Loop):
 1. Muse sửa file `.cs`.
@@ -175,7 +173,7 @@ Bình thường Hermes sẽ tự động phân tích tech stack để chọn wor
 
 | Worker muốn chỉ định | Từ khóa nhận diện trong câu chat | Ví dụ câu lệnh chat vào Discord | Hành động Hermes sẽ thực thi |
 | :--- | :--- | :--- | :--- |
-| **1. Muse Code**<br>*(Chuyên Unity C#)* | `dùng muse`, `muse code`, `qua muse`, `bằng muse` | *"Dùng muse viết controller cho Popup_Reward trong client"*<br>*"Sửa bug skill pet qua muse code nhé"* | Đóng gói Design Spec, gọi `muse exec --model meta/muse-spark-1.3-contributor --reasoning-effort xhigh --yolo` kèm **Unity MCP Mini (13 tools)**. |
+| **1. Muse Code**<br>*(Chuyên Unity C#)* | `dùng muse`, `muse code`, `qua muse`, `bằng muse` | *"Dùng muse viết controller cho Popup_Reward trong client"*<br>*"Sửa bug skill pet qua muse code nhé"* | Đóng gói Design Spec, gọi `muse exec --yolo --reasoning-effort <medium|high>` (native sub 130k) kèm **Unity MCP Mini (13 tools)**. |
 | **2. mini-SWE**<br>*(Chuyên Backend DeepSeek)* | `dùng mini`, `dùng deepseek`, `qua mini-swe`, `bằng mini` | *"Dùng mini sửa bug tính exp quest trong CleanArch"*<br>*"Viết test API login bằng deepseek"* | Gọi `mini --exit-immediately -y -l 0.5 -m openai/thtung-paid` chạy bash loop giải quyết trong ~28s. |
 | **3. OpenCode**<br>*(Chuyên Review & GLM)* | `dùng opencode`, `dùng glm`, `qua opencode`, `bằng glm` | *"Dùng opencode review diff nhánh feature_pokiwar xem sót gì không"*<br>*"Refactor module payment bằng glm"* | Gọi `opencode run -m ninerouter/thtung-glm` đọc hiểu toàn bộ repo rộng để audit/refactor. |
 | **4. Codex CLI**<br>*(Chuyên Kiến trúc GPT)* | `dùng codex`, `qua codex`, `bằng codex` | *"Dùng codex thiết kế interface cho module Matchmaking"*<br>*"Codex review bảo mật file auth"* | Gọi `codex exec -s workspace-write` hoặc `codex review --base origin/main`. |
