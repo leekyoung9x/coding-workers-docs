@@ -169,7 +169,25 @@ Chạy trực tiếp `agy` trên terminal, trình duyệt sẽ tự mở trang G
 
 ---
 
-## 5. BẢNG XỬ LÝ SỰ CỐ THƯỜNG GẶP (TROUBLESHOOTING)
+## 5. BẢNG CÚ PHÁP CHỈ ĐỊNH CHỦ ĐỘNG TỪ DISCORD (DISCORD TRIGGER MATRIX)
+
+Bình thường Hermes sẽ tự động phân tích tech stack để chọn worker. Khi người dùng muốn **ép buộc chỉ định một worker cụ thể**, chỉ cần chèn các từ khóa nhận diện vào câu chat trong Discord theo bảng sau:
+
+| Worker muốn chỉ định | Từ khóa nhận diện trong câu chat | Ví dụ câu lệnh chat vào Discord | Hành động Hermes sẽ thực thi |
+| :--- | :--- | :--- | :--- |
+| **1. Muse Code**<br>*(Chuyên Unity C#)* | `dùng muse`, `muse code`, `qua muse`, `bằng muse` | *"Dùng muse viết controller cho Popup_Reward trong client"*<br>*"Sửa bug skill pet qua muse code nhé"* | Đóng gói Design Spec, gọi `muse exec --model meta/muse-spark-1.3-contributor --reasoning-effort xhigh --yolo` kèm **Unity MCP Mini (13 tools)**. |
+| **2. mini-SWE**<br>*(Chuyên Backend DeepSeek)* | `dùng mini`, `dùng deepseek`, `qua mini-swe`, `bằng mini` | *"Dùng mini sửa bug tính exp quest trong CleanArch"*<br>*"Viết test API login bằng deepseek"* | Gọi `mini --exit-immediately -y -l 0.5 -m openai/thtung-paid` chạy bash loop giải quyết trong ~28s. |
+| **3. OpenCode**<br>*(Chuyên Review & GLM)* | `dùng opencode`, `dùng glm`, `qua opencode`, `bằng glm` | *"Dùng opencode review diff nhánh feature_pokiwar xem sót gì không"*<br>*"Refactor module payment bằng glm"* | Gọi `opencode run -m ninerouter/thtung-glm` đọc hiểu toàn bộ repo rộng để audit/refactor. |
+| **4. Codex CLI**<br>*(Chuyên Kiến trúc GPT)* | `dùng codex`, `qua codex`, `bằng codex` | *"Dùng codex thiết kế interface cho module Matchmaking"*<br>*"Codex review bảo mật file auth"* | Gọi `codex exec -s workspace-write` hoặc `codex review --base origin/main`. |
+| **5. Antigravity**<br>*(Chuyên Gemini & Đa năng)* | `dùng agy`, `dùng antigravity`, `qua agy`, `bằng agy` | *"Dùng agy phân tích log crash này xem"*<br>*"Qua agy đọc 10 file dump này"* | Gọi `agy -p "<task>" --dangerously-skip-permissions` tận dụng context window 1M+ tokens. |
+
+> **Quy tắc phối hợp:**
+> - **Chat tự nhiên (không chỉ định worker)**: Hermes tự động nhận diện: nếu file `.cs`/Unity ➔ tự gọi **Muse Code**; nếu Backend (.NET/TS/Go/Python) ➔ tự gọi **mini-SWE (DeepSeek)**.
+> - **Chat có kèm từ khóa chỉ định**: Hermes tuân thủ 100% worker người dùng yêu cầu.
+
+---
+
+## 6. BẢNG XỬ LÝ SỰ CỐ THƯỜNG GẶP (TROUBLESHOOTING)
 
 | Hiện tượng lỗi | Nguyên nhân cốt lõi | Cách khắc phục ngay lập tức |
 | :--- | :--- | :--- |
