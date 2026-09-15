@@ -24,7 +24,7 @@ Discord → Hermes        ├──────────────→ OpenC
                         │
                         ├──────────────→ OpenAI Codex CLI (codex)
                         │                  ↓ (Responses API / HTTPS fallback)
-                        │                OpenAI OAuth / 9Router: thtung-paid / GPT models
+                        │                9Router: thtung-gpt → GPT-5.6 Luna
                         │
                         └──────────────→ Antigravity CLI (agy)
                                            ↓ (Google Sign-In OAuth / thtung-agy)
@@ -71,11 +71,11 @@ Tất cả các worker (trừ Muse Code dùng upstream OpenRouter) đều trỏ 
 
 | Tên Combo | Model List trong Combo | Trạng thái thực tế |
 |---|---|---|
-| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (mini-SWE) & Codex |
+| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (mini-SWE) |
 | `thtung-glm` | `xq/glm-5.3-flash` | Phục vụ GLM-5.3-Flash qua OpenCode (~2s) |
 | `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | Chạy chuẩn qua Responses API (muse-shim) & stream |
 | `thtung-agy` | `ag/gemini-3.8-flash-high`, `omni/thtung-agy` | Active qua 2 account Google OAuth trong 9Router |
-| `thtung-gpt` | `exp/gpt-5.6-luna`, `xq/gpt-5-6-luna` | Phục vụ model dòng GPT |
+| `thtung-gpt` | `exp/gpt-5.6-luna`, `xq/gpt-5-6-luna` | Phục vụ model dòng GPT & Codex CLI (Responses API) |
 
 ---
 
@@ -135,7 +135,7 @@ agy -p "<yêu cầu task>" --dangerously-skip-permissions
 
 ### A. Codex CLI (`~/.codex/config.toml`)
 ```toml
-model = "thtung-paid"
+model = "thtung-gpt"
 model_provider = "ninerouter"
 
 [model_providers.ninerouter]
