@@ -1,106 +1,169 @@
 # Coding Workers — Hermes + 9Router
 
-Hermes giữ session/context, Figma MCP FULL, Unity MCP Pro FULL, routing và
-final verification. Worker giữ coding loop (repo, shell, test/build/lint).
+Hermes đóng vai trò Orchestrator: quản lý session/context, giữ kết nối Discord, tích hợp Figma MCP FULL, Unity MCP Pro FULL, phân luồng công việc (routing) và kiểm định chất lượng cuối cùng (final verification). 
 
-## Kiến trúc
+Các Dedicated Worker CLI sở hữu coding loop độc lập (quản lý repository, tương tác shell, build/test/lint).
+
+---
+
+## 1. Kiến trúc Tổng thể (5 Workers)
 
 ```text
-Discord → Hermes Gateway → Hermes Agent
-  │
-  │  task rất nhỏ → Hermes tự xử (không gọi worker)
-  │
-  ├─ task khó / repo lớn / long-horizon → /muse-code
-  │     muse-code skill → Muse Code CLI (muse)
-  │       → muse-shim generic :8787 (Responses API)
-  │       → 9Router combo thtung-muse → Meta Muse Spark 1.3
-  │
-  ├─ feature / bug / refactor thường → /deepseek-code
-  │     deepseek-code skill → mini-SWE-agent (LiteLLM nằm trong nó)
-  │       → 9Router combo thtung-paid → DeepSeek V4.1 Flash
-  │
-  └─ GLM worker → /glm-code
-        glm-code skill → opencode CLI
-          → 9Router combo thtung-glm → GLM-5.3-Flash
+                        ┌──────────────→ Muse Code CLI (muse)
+                        │                  ↓ (Responses API qua muse-shim :8787)
+                        │                9Router: thtung-muse → Meta Muse Spark 1.3
+                        │
+                        ├──────────────→ mini-SWE-agent (mini)
+                        │                  ↓ (OpenAI-compatible)
+                        │                9Router: thtung-paid → DeepSeek V4.1 Flash
+                        │
+Discord → Hermes        ├──────────────→ OpenCode CLI (opencode)
+ (Orchestrator) ────────┤                  ↓ (OpenAI-compatible)
+                        │                9Router: thtung-glm → GLM-5.3-Flash
+                        │
+                        ├──────────────→ OpenAI Codex CLI (codex)
+                        │                  ↓ (Responses API / HTTPS fallback)
+                        │                9Router: thtung-paid / OpenAI models
+                        │
+                        └──────────────→ Antigravity CLI (agy)
+                                           ↓ (Google Sign-In OAuth / thtung-agy)
+                                         Google Gemini 3.8 / Claude Opus 4.6
 
-Tất cả worker trả về → Hermes final verify (git diff, test status,
-Unity MCP nếu cần) → Discord báo kết quả.
+
+Hermes đảm nhiệm:
+- Discord Gateway & multi-turn session
+- Figma MCP (FULL) & Unity MCP Pro (FULL)
+- Thu thập context & phân tích yêu cầu
+- Routing tác vụ & verify git diff / test suite trước khi báo cáo
+
+Workers đảm nhiệm:
+- Coding agent loop chuyên biệt (bash-centric hoặc TUI runner)
+- Đọc, tìm kiếm, chỉnh sửa file trong repo
+- Chạy test, build, lint, tự fix lỗi
+- Cô lập ngữ cảnh (<10k token ban đầu), tránh phình context
 ```
 
-## Components
+---
 
-| Gì | Ở đâu | Ghi chú |
+## 2. Danh mục Components & Workers
+
+| Thành phần | Binary / Đường dẫn | Phiên bản | Mô tả & Cách đấu nối |
+|---|---|:---:|---|
+| **muse-code** skill | `~/.hermes/skills/muse-code/` | 0.1.0 | Ủy quyền task khó/long-horizon cho Muse Code CLI |
+| **deepseek-code** skill | `~/.hermes/skills/deepseek-code/` | 0.1.0 | Worker mặc định cho feature/bugfix thường via mini-SWE |
+| **glm-code** skill | `~/.hermes/skills/glm-code/` | 0.1.0 | Worker cho các luồng GLM qua OpenCode CLI |
+| **codex** skill | `~/.hermes/skills/autonomous-ai-agents/codex/` | 1.0.1 | Ủy quyền coding/review cho OpenAI Codex CLI |
+| **antigravity** skill | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | 1.0.0 | Ủy quyền coding cho Google Antigravity CLI (`agy`) |
+| **Muse Code CLI** | `/root/.local/bin/muse` | 1.2.1 | CLI native của Meta |
+| **muse-shim** | `/root/ops/muse-shim/` (systemd: `muse-shim`) | - | Shim proxy loopback `:8787` -> 9Router `/v1/responses` |
+| **mini-SWE-agent** | `/root/.local/bin/mini` (uv tool) | 2.4.6 | Agent ~100 dòng Python, bash-only, LiteLLM bên trong |
+| **OpenCode CLI** | `/usr/local/bin/opencode` (npm global) | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` |
+| **Codex CLI** | `/usr/local/bin/codex` (npm global) | 0.154.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
+| **Antigravity CLI** | `/root/.local/bin/agy` (native binary) | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
+
+---
+
+## 3. Cấu hình Combos (9Router)
+
+Tất cả các worker đều trỏ về 9Router local (`http://127.0.0.1:20127/v1` trên host hoặc `http://172.17.0.1:20127/v1` từ Docker container):
+
+| Tên Combo | Model List trong Combo | Trạng thái thực tế |
 |---|---|---|
-| skill `muse-code` / `deepseek-code` / `glm-code` | `~/.hermes/skills/<name>/SKILL.md` | trigger + cách chạy + pitfalls |
-| `muse` CLI 1.2.1 | `~/.local/bin/muse` | worker native cho Muse |
-| muse-shim (source) | `/root/ops/muse-shim/` | luckeyfaraday/muse-shim, generic mode |
-| muse-shim (runner) | `/root/ops/muse-shim/run-shim.sh` | đọc key 9Router live từ DB, không lưu key trong file |
-| muse-shim (service) | systemd `muse-shim` | `127.0.0.1:8787` → 9Router `/v1/responses`, model `thtung-muse`, auto-restart |
-| `mini` 2.4.6 | `/root/.local/bin/mini` (uv tool) | worker cho DeepSeek |
-| mini config | `/root/.config/mini-swe-agent/.env` (0600) | `MSWEA_CONFIGURED=true`, `OPENAI_API_BASE=http://127.0.0.1:20127/v1` |
-| `opencode` 1.18.31 | `/usr/local/bin/opencode` | worker cho GLM (+ fallback cho Muse) |
-| opencode config | `~/.config/opencode/opencode.json` (0600) | provider `ninerouter` → 9Router, models keyed theo combo id |
-| `codex` CLI 0.154.0 | `/usr/local/bin/codex` | OpenAI Codex CLI, trỏ 9Router qua `~/.codex/config.toml` |
-| `agy` CLI 1.2.3 | `/root/.local/bin/agy` | Google Antigravity CLI, Google Sign-in OAuth / combo `thtung-agy` |
+| `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | Chạy chuẩn qua Responses API (muse-shim) & stream |
+| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek & Codex |
+| `thtung-glm` | `xq/glm-5.3-flash` (dự phòng aibox chết 503) | Phục vụ GLM-5.3-Flash qua OpenCode (~10s) |
+| `thtung-agy` | `ag/gemini-3.8-flash-high`, `omni/thtung-agy` | Active qua 2 account Google OAuth trong 9Router |
+| `thtung-gpt` | `exp/gpt-5.6-luna`, `xq/gpt-5-6-luna` | Phục vụ model dòng GPT |
 
-## Combos (9Router, DB có sẵn — không tạo mới)
+---
 
-| Combo | Entries | Trạng thái đo thật |
-|---|---|---|
-| `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | OK qua shim/opencode-stream; JSON thường trả `content:''` |
-| `thtung-paid` | `aibox/deepseek-v4.1-flash` | OK, JSON thường, ~1.5s |
-| `thtung-glm` | `aibox/zai-org/glm-5.3-flash`, `xq/glm-5.3-flash` | entry 1 chết 503 `model_not_found`, fallback entry 2 sống (~10s) |
-
-## Cách chạy (canonical)
+## 4. Hướng dẫn Thực thi (Canonical Commands)
 
 ```bash
-# Muse — task khó (cần shim service đang active)
+# 1. Muse Code (Task khó, repo lớn, long-horizon)
 muse exec --provider meta --base-url http://127.0.0.1:8787 --model thtung-muse \
-  --yolo --json "<task + acceptance criteria>"
+  --yolo --json "<yêu cầu task>"
 
-# DeepSeek — task thường
+# 2. DeepSeek (Mặc định cho tính năng, bugfix, refactor)
 MSWEA_SILENT_STARTUP=1 mini --exit-immediately -m openai/thtung-paid \
-  -t "<task>. Then echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as its own command." -y -l 0.5
+  -t "<yêu cầu task>. Then echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as its own command." -y -l 0.5
 
-# GLM
-opencode run -m ninerouter/thtung-glm --format json "<task + acceptance criteria>"
+# 3. GLM Worker (Chạy qua OpenCode)
+opencode run -m ninerouter/thtung-glm --format json "<yêu cầu task>"
 
-# Codex CLI
-codex exec -s workspace-write "<task + acceptance criteria>"
+# 4. Codex CLI (Chạy trực tiếp qua 9Router Responses API)
+codex exec -s workspace-write "<yêu cầu task>"
 
-# Antigravity CLI (agy)
-agy -p "<task + acceptance criteria>" --dangerously-skip-permissions
+# 5. Antigravity CLI (Google Antigravity agy)
+agy -p "<yêu cầu task>" --dangerously-skip-permissions
 ```
 
-## Ops
+---
 
+## 5. Cấu hình Chi tiết Từng Worker
+
+### A. Codex CLI (`~/.codex/config.toml`)
+```toml
+model = "thtung-paid"
+model_provider = "ninerouter"
+
+[model_providers.ninerouter]
+name = "9Router Local"
+base_url = "http://127.0.0.1:20127/v1"
+wire_api = "responses"
+supports_websockets = false
+requires_openai_auth = true
+```
+*Lưu ý*: Thiết lập `supports_websockets = false` giúp Codex bỏ qua 5 lần thử websocket thất bại (tiết kiệm 7 giây khởi động mỗi lệnh) và kết nối tức thì bằng HTTPS transport.
+
+### B. mini-SWE-agent (`/root/.config/mini-swe-agent/.env`)
 ```bash
-systemctl is-active muse-shim
-curl -s http://127.0.0.1:8787/health
-systemctl restart muse-shim   # sau khi sửa run-shim.sh / DB key
+LITELLM_API_KEY="<9Router_Key>"
+LITELLM_BASE_URL="http://127.0.0.1:20127/v1"
+MSWEA_CONFIGURED="true"
+MSWEA_MODEL_NAME="openai/thtung-paid"
+OPENAI_API_KEY="<9Router_Key>"
+OPENAI_API_BASE="http://127.0.0.1:20127/v1"
+MSWEA_COST_TRACKING="ignore_errors"
 ```
 
-## Pitfalls (đã dính thật)
+### C. OpenCode CLI (`~/.config/opencode/opencode.json`)
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ninerouter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "9Router",
+      "options": {
+        "baseURL": "http://127.0.0.1:20127/v1",
+        "apiKey": "<9Router_Key>"
+      },
+      "models": {
+        "thtung-glm": { "name": "GLM combo", "limit": { "context": 200000, "output": 32000 } },
+        "thtung-paid": { "name": "DeepSeek combo", "limit": { "context": 200000, "output": 32000 } },
+        "thtung-muse": { "name": "Muse combo", "limit": { "context": 200000, "output": 32000 } }
+      }
+    }
+  }
+}
+```
 
-1. `muse` cần `muse auth set --provider meta` một giá trị bất kỳ cho qua local
-   check — auth thật là key 9Router nằm trong shim. Không cần `muse login`.
-2. `thtung-muse` qua JSON chat thường trả rỗng — luôn đi qua shim (Responses)
-   hoặc opencode/stream.
-3. `opencode run` chỉ đọc GLOBAL config, bỏ qua `./opencode.json` trong cwd.
-4. `mini` không có `MSWEA_CONFIGURED=true` sẽ rớt vào setup interactive và treo
-   headless — luôn `--exit-immediately -y`, task prompt phải dặn echo
-   `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`.
-5. Entry GLM `aibox` chết nhưng KHÔNG xóa — combo sống nhờ fallback sang `xq`.
-6. DeepSeek reasoning effort là số 1–100, chưa map LOW/HIGH/MAX qua mini.
+### D. Muse Code Shim Service (`systemd`)
+- Service: `systemctl status muse-shim`
+- Runner script: `/root/ops/muse-shim/run-shim.sh` tự đọc live key từ SQLite `apiKeys`.
+- Endpoint test: `curl http://127.0.0.1:8787/health` trả về `{"ok":true,"service":"muse-shim"}`.
 
-## Lịch sử verify & Báo cáo đo lường (2026-09-15)
+### E. Antigravity CLI (`agy`)
+- Binary: `/root/.local/bin/agy` (v1.2.3).
+- Để đăng nhập lần đầu trên VPS headless: chạy với biến `SSH_CONNECTION="1.1.1.1 1234 2.2.2.2 22" agy -p "hi"`, CLI sẽ in link Google OAuth URL để mở trình duyệt cấp quyền.
 
-- [Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)
-- [Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)
+---
 
-### Tóm tắt thực nghiệm:
-- mini → thtung-paid: `HELLO_SWE_OK`, `DONE_MINI_HEADLESS` — OK.
-- opencode → thtung-glm (fallback xq): `HI_GLM_OK` — OK.
-- muse → shim → thtung-muse: `HI_MUSE_NATIVE`, `HI_SHIM_SVC` — OK.
-- **Đối đầu trực tiếp**: `mini-SWE` nhanh gấp 2.5 lần ở single-file (34s vs 85s) và hoàn thành multi-file trong 28s trong khi Hermes Direct bị timeout >180s.
-- DB backup: `/tmp/9r-backup.sqlite` (bản ngày triển khai).
+## 6. Lịch sử Kiểm nghiệm & Benchmark
+
+- 📊 **[Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)**: Hướng dẫn đo lường theo chuẩn DeepSWE (Pier runner) và Terminal-Bench (Harbor runner).
+- 📈 **[Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)**:
+  - **Single-File Bugfix**: mini-SWE hoàn thành trong **34s** (6 bước) vs Hermes mất **85s** (mini-SWE nhanh hơn 2.5 lần).
+  - **Multi-File Feature**: mini-SWE hoàn thành trong **28s** (5 bước, 100% test pass) vs Hermes bị **TIMEOUT >180s** do phình context (>318k token/turn).
+  - **DeepSWE v1.1**: Pass 40% (2/5 bài khó tuyệt đối), P2P 80% (không gây regression), 92.3% cache-hit rate.
