@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "mcpServers": {
+    "unity-mcp-mini": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/Users/leekyoung9x/Downloads/pokiwar/pokiguard_client/Assets/UnityMcpPro/Server~/build/unity-mini.js"
+      ]
+    }
+  }
+}

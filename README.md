@@ -1,8 +1,8 @@
-# Coding Workers — Hermes + 9Router
+# Coding Workers — Hermes + 9Router / OpenRouter
 
-Hermes đóng vai trò Orchestrator: quản lý session/context, giữ kết nối Discord, tích hợp Figma MCP FULL, Unity MCP Pro FULL, phân luồng công việc (routing) và kiểm định chất lượng cuối cùng (final verification). 
+Hermes đóng vai trò **Orchestrator**: quản lý session/context, giữ kết nối Discord, tích hợp Figma MCP (FULL), Unity MCP Pro (FULL), phân luồng công việc (routing), trích xuất design spec và kiểm định chất lượng cuối cùng (final verification). 
 
-Các Dedicated Worker CLI sở hữu coding loop độc lập (quản lý repository, tương tác shell, build/test/lint).
+Các **Dedicated Worker CLI** sở hữu coding loop độc lập (quản lý repository, tương tác shell, build/test/lint, tự sửa lỗi biên dịch).
 
 ---
 
@@ -11,7 +11,8 @@ Các Dedicated Worker CLI sở hữu coding loop độc lập (quản lý reposi
 ```text
                         ┌──────────────→ Muse Code CLI (muse)
                         │                  ↓ (Responses API qua muse-shim :8787)
-                        │                9Router: thtung-muse → Meta Muse Spark 1.3
+                        │                OpenRouter / 9Router: thtung-muse → Meta Muse Spark 1.3
+                        │                (Tích hợp Unity MCP Mini: 13 tools cốt lõi)
                         │
                         ├──────────────→ mini-SWE-agent (mini)
                         │                  ↓ (OpenAI-compatible)
@@ -23,7 +24,7 @@ Discord → Hermes        ├──────────────→ OpenC
                         │
                         ├──────────────→ OpenAI Codex CLI (codex)
                         │                  ↓ (Responses API / HTTPS fallback)
-                        │                9Router: thtung-paid / OpenAI models
+                        │                OpenAI OAuth / 9Router: thtung-paid / GPT models
                         │
                         └──────────────→ Antigravity CLI (agy)
                                            ↓ (Google Sign-In OAuth / thtung-agy)
@@ -32,14 +33,14 @@ Discord → Hermes        ├──────────────→ OpenC
 
 Hermes đảm nhiệm:
 - Discord Gateway & multi-turn session
-- Figma MCP (FULL) & Unity MCP Pro (FULL)
+- Figma MCP (FULL - 45 tools) & Unity MCP Pro (FULL - 275 tools)
 - Thu thập context & phân tích yêu cầu
 - Routing tác vụ & verify git diff / test suite trước khi báo cáo
 
 Workers đảm nhiệm:
 - Coding agent loop chuyên biệt (bash-centric hoặc TUI runner)
 - Đọc, tìm kiếm, chỉnh sửa file trong repo
-- Chạy test, build, lint, tự fix lỗi
+- Chạy test, build, lint, tự fix lỗi biên dịch
 - Cô lập ngữ cảnh (<10k token ban đầu), tránh phình context
 ```
 
@@ -47,31 +48,32 @@ Workers đảm nhiệm:
 
 ## 2. Danh mục Components & Workers
 
-| Thành phần | Binary / Đường dẫn | Phiên bản | Mô tả & Cách đấu nối |
-|---|---|:---:|---|
-| **muse-code** skill | `~/.hermes/skills/muse-code/` | 0.1.0 | Ủy quyền task khó/long-horizon cho Muse Code CLI |
-| **deepseek-code** skill | `~/.hermes/skills/deepseek-code/` | 0.1.0 | Worker mặc định cho feature/bugfix thường via mini-SWE |
-| **glm-code** skill | `~/.hermes/skills/glm-code/` | 0.1.0 | Worker cho các luồng GLM qua OpenCode CLI |
-| **codex** skill | `~/.hermes/skills/autonomous-ai-agents/codex/` | 1.0.1 | Ủy quyền coding/review cho OpenAI Codex CLI |
-| **antigravity** skill | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | 1.0.0 | Ủy quyền coding cho Google Antigravity CLI (`agy`) |
-| **Muse Code CLI** | `/root/.local/bin/muse` | 1.2.1 | CLI native của Meta |
-| **muse-shim** | `/root/ops/muse-shim/` (systemd: `muse-shim`) | - | Shim proxy loopback `:8787` -> 9Router `/v1/responses` |
-| **mini-SWE-agent** | `/root/.local/bin/mini` (uv tool) | 2.4.6 | Agent ~100 dòng Python, bash-only, LiteLLM bên trong |
-| **OpenCode CLI** | `/usr/local/bin/opencode` (npm global) | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` |
-| **Codex CLI** | `/usr/local/bin/codex` (npm global) | 0.154.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
-| **Antigravity CLI** | `/root/.local/bin/agy` (native binary) | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
+| Thành phần | Binary Linux VPS | Binary macOS (Apple Silicon) | Phiên bản | Mô tả & Cách đấu nối |
+| :--- | :--- | :--- | :---: | :--- |
+| **muse-code** skill | `~/.hermes/skills/muse-code/` | `~/.hermes/skills/autonomous-ai-agents/muse-code/` | 1.0.0 | Điều phối task khó/long-horizon cho Muse Code CLI (Reasoning: `xhigh`) |
+| **codex** skill | `~/.hermes/skills/autonomous-ai-agents/codex/` | `~/.hermes/skills/autonomous-ai-agents/codex/` | 1.0.1 | Điều phối coding/review cho OpenAI Codex CLI |
+| **opencode** skill | `~/.hermes/skills/glm-code/` | `~/.hermes/skills/autonomous-ai-agents/opencode/` | 1.2.0 | Điều phối tác vụ qua OpenCode CLI |
+| **antigravity** skill | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | 1.0.0 | Điều phối coding cho Google Antigravity CLI (`agy`) |
+| **Muse Code CLI** | `/root/.local/bin/muse` | `~/.local/bin/muse` | 1.2.1 | CLI native của Meta (kèm `unity-mini.js` 13 tools) |
+| **muse-shim** | `/root/ops/muse-shim/` | `~/.local/share/muse-shim/`<br>`~/.local/bin/muse-shim` | 0.4.0 | Shim proxy loopback `:8787` ➔ Responses API |
+| **mini-SWE-agent** | `/root/.local/bin/mini` | `~/.local/bin/mini` | 2.4.6 | Agent ~100 dòng Python, bash-only (DeepSeek via 9Router) |
+| **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
+| **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
+| **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
 
 ---
 
 ## 3. Cấu hình Combos (9Router)
 
-Tất cả các worker đều trỏ về 9Router local (`http://127.0.0.1:20127/v1` trên host hoặc `http://172.17.0.1:20127/v1` từ Docker container):
+Tất cả các worker (trừ Muse Code dùng upstream OpenRouter) đều trỏ về 9Router:
+- **Từ Linux VPS**: `http://127.0.0.1:20127/v1` (host) hoặc `http://172.17.0.1:20127/v1` (docker).
+- **Từ macOS Workstation**: `https://router.cutes1tg.online/v1`.
 
 | Tên Combo | Model List trong Combo | Trạng thái thực tế |
 |---|---|---|
+| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (mini-SWE) & Codex |
+| `thtung-glm` | `xq/glm-5.3-flash` | Phục vụ GLM-5.3-Flash qua OpenCode (~2s) |
 | `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | Chạy chuẩn qua Responses API (muse-shim) & stream |
-| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek & Codex |
-| `thtung-glm` | `xq/glm-5.3-flash` (dự phòng aibox chết 503) | Phục vụ GLM-5.3-Flash qua OpenCode (~10s) |
 | `thtung-agy` | `ag/gemini-3.8-flash-high`, `omni/thtung-agy` | Active qua 2 account Google OAuth trong 9Router |
 | `thtung-gpt` | `exp/gpt-5.6-luna`, `xq/gpt-5-6-luna` | Phục vụ model dòng GPT |
 
@@ -79,22 +81,51 @@ Tất cả các worker đều trỏ về 9Router local (`http://127.0.0.1:20127/
 
 ## 4. Hướng dẫn Thực thi (Canonical Commands)
 
-```bash
-# 1. Muse Code (Task khó, repo lớn, long-horizon)
-muse exec --provider meta --base-url http://127.0.0.1:8787 --model thtung-muse \
-  --yolo --json "<yêu cầu task>"
+### 4.1. Trên macOS Workstation
 
-# 2. DeepSeek (Mặc định cho tính năng, bugfix, refactor)
+```bash
+# 1. Muse Code (Task khó, repo C# Unity, long-horizon)
+META_API_KEY=local-shim-placeholder muse exec \
+  --provider meta \
+  --base-url http://127.0.0.1:8787 \
+  --model meta/muse-spark-1.3-contributor \
+  --reasoning-effort xhigh \
+  --yolo \
+  --workspace "/path/to/project" \
+  "<yêu cầu task>"
+
+# 2. DeepSeek (Mặc định cho tính năng nhanh, bugfix, refactor)
 MSWEA_SILENT_STARTUP=1 mini --exit-immediately -m openai/thtung-paid \
   -t "<yêu cầu task>. Then echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as its own command." -y -l 0.5
 
 # 3. GLM Worker (Chạy qua OpenCode)
-opencode run -m ninerouter/thtung-glm --format json "<yêu cầu task>"
+opencode run -m ninerouter/thtung-glm "<yêu cầu task>"
 
-# 4. Codex CLI (Chạy trực tiếp qua 9Router Responses API)
+# 4. Codex CLI (Chạy trực tiếp qua OpenAI OAuth / 9Router)
 codex exec -s workspace-write "<yêu cầu task>"
 
 # 5. Antigravity CLI (Google Antigravity agy)
+agy -p "<yêu cầu task>" --dangerously-skip-permissions
+```
+
+### 4.2. Trên Linux VPS
+
+```bash
+# 1. Muse Code
+muse exec --provider meta --base-url http://127.0.0.1:8787 --model thtung-muse \
+  --yolo --json "<yêu cầu task>"
+
+# 2. mini-SWE-agent
+MSWEA_SILENT_STARTUP=1 mini --exit-immediately -m openai/thtung-paid \
+  -t "<yêu cầu task>. Then echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as its own command." -y -l 0.5
+
+# 3. OpenCode CLI
+opencode run -m ninerouter/thtung-glm --format json "<yêu cầu task>"
+
+# 4. Codex CLI
+codex exec -s workspace-write "<yêu cầu task>"
+
+# 5. Antigravity CLI
 agy -p "<yêu cầu task>" --dangerously-skip-permissions
 ```
 
@@ -108,23 +139,24 @@ model = "thtung-paid"
 model_provider = "ninerouter"
 
 [model_providers.ninerouter]
-name = "9Router Local"
-base_url = "http://127.0.0.1:20127/v1"
+name = "9Router"
+base_url = "https://router.cutes1tg.online/v1"
 wire_api = "responses"
 supports_websockets = false
 requires_openai_auth = true
 ```
 *Lưu ý*: Thiết lập `supports_websockets = false` giúp Codex bỏ qua 5 lần thử websocket thất bại (tiết kiệm 7 giây khởi động mỗi lệnh) và kết nối tức thì bằng HTTPS transport.
 
-### B. mini-SWE-agent (`/root/.config/mini-swe-agent/.env`)
+### B. mini-SWE-agent (`~/.config/mini-swe-agent/.env`)
 ```bash
-LITELLM_API_KEY="<9Router_Key>"
-LITELLM_BASE_URL="http://127.0.0.1:20127/v1"
+OPENAI_API_KEY="sk-fa5efb56e57fe4b9-drd5jf-be158103"
+OPENAI_API_BASE="https://router.cutes1tg.online/v1"
+LITELLM_API_KEY="sk-fa5efb56e57fe4b9-drd5jf-be158103"
+LITELLM_BASE_URL="https://router.cutes1tg.online/v1"
 MSWEA_CONFIGURED="true"
 MSWEA_MODEL_NAME="openai/thtung-paid"
-OPENAI_API_KEY="<9Router_Key>"
-OPENAI_API_BASE="http://127.0.0.1:20127/v1"
 MSWEA_COST_TRACKING="ignore_errors"
+MSWEA_SILENT_STARTUP="1"
 ```
 
 ### C. OpenCode CLI (`~/.config/opencode/opencode.json`)
@@ -136,27 +168,27 @@ MSWEA_COST_TRACKING="ignore_errors"
       "npm": "@ai-sdk/openai-compatible",
       "name": "9Router",
       "options": {
-        "baseURL": "http://127.0.0.1:20127/v1",
-        "apiKey": "<9Router_Key>"
+        "baseURL": "https://router.cutes1tg.online/v1",
+        "apiKey": "sk-fa5efb56e57fe4b9-drd5jf-be158103"
       },
       "models": {
-        "thtung-glm": { "name": "GLM combo", "limit": { "context": 200000, "output": 32000 } },
-        "thtung-paid": { "name": "DeepSeek combo", "limit": { "context": 200000, "output": 32000 } },
-        "thtung-muse": { "name": "Muse combo", "limit": { "context": 200000, "output": 32000 } }
+        "thtung-glm": { "name": "GLM-5.3-Flash", "limit": { "context": 200000, "output": 32000 } },
+        "thtung-paid": { "name": "DeepSeek-V4.1-Flash", "limit": { "context": 1000000, "output": 32000 } }
       }
     }
   }
 }
 ```
 
-### D. Muse Code Shim Service (`systemd`)
-- Service: `systemctl status muse-shim`
-- Runner script: `/root/ops/muse-shim/run-shim.sh` tự đọc live key từ SQLite `apiKeys`.
-- Endpoint test: `curl http://127.0.0.1:8787/health` trả về `{"ok":true,"service":"muse-shim"}`.
+### D. Muse Code & muse-shim (macOS)
+- Proxy loopback: `muse-shim generic` lắng nghe cổng `:8787`.
+- Quản lý service: `muse-shim-service {start|stop|restart|status|logs}`.
+- Cấu hình Unity MCP Mini (13 tools cốt lõi) tại `~/.config/muse/settings.json`.
 
 ### E. Antigravity CLI (`agy`)
-- Binary: `/root/.local/bin/agy` (v1.2.3).
-- Để đăng nhập lần đầu trên VPS headless: chạy với biến `SSH_CONNECTION="1.1.1.1 1234 2.2.2.2 22" agy -p "hi"`, CLI sẽ in link Google OAuth URL để mở trình duyệt cấp quyền.
+- Cài đặt nhanh: `curl -fsSL https://antigravity.google/cli/install.sh | bash`.
+- Binary: `~/.local/bin/agy` (v1.2.3).
+- Chạy lần đầu trong terminal để hoàn tất đăng nhập Google OAuth.
 
 ---
 
