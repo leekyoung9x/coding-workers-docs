@@ -85,9 +85,14 @@ systemctl restart muse-shim   # sau khi sửa run-shim.sh / DB key
 5. Entry GLM `aibox` chết nhưng KHÔNG xóa — combo sống nhờ fallback sang `xq`.
 6. DeepSeek reasoning effort là số 1–100, chưa map LOW/HIGH/MAX qua mini.
 
-## Lịch sử verify (2026-09-15, file tạo thật + đọc lại)
+## Lịch sử verify & Báo cáo đo lường (2026-09-15)
 
+- [Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)
+- [Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)
+
+### Tóm tắt thực nghiệm:
 - mini → thtung-paid: `HELLO_SWE_OK`, `DONE_MINI_HEADLESS` — OK.
 - opencode → thtung-glm (fallback xq): `HI_GLM_OK` — OK.
 - muse → shim → thtung-muse: `HI_MUSE_NATIVE`, `HI_SHIM_SVC` — OK.
+- **Đối đầu trực tiếp**: `mini-SWE` nhanh gấp 2.5 lần ở single-file (34s vs 85s) và hoàn thành multi-file trong 28s trong khi Hermes Direct bị timeout >180s.
 - DB backup: `/tmp/9r-backup.sqlite` (bản ngày triển khai).
