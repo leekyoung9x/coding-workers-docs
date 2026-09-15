@@ -40,6 +40,8 @@ Unity MCP nếu cần) → Discord báo kết quả.
 | mini config | `/root/.config/mini-swe-agent/.env` (0600) | `MSWEA_CONFIGURED=true`, `OPENAI_API_BASE=http://127.0.0.1:20127/v1` |
 | `opencode` 1.18.31 | `/usr/local/bin/opencode` | worker cho GLM (+ fallback cho Muse) |
 | opencode config | `~/.config/opencode/opencode.json` (0600) | provider `ninerouter` → 9Router, models keyed theo combo id |
+| `codex` CLI 0.154.0 | `/usr/local/bin/codex` | OpenAI Codex CLI, trỏ 9Router qua `~/.codex/config.toml` |
+| `agy` CLI 1.2.3 | `/root/.local/bin/agy` | Google Antigravity CLI, Google Sign-in OAuth / combo `thtung-agy` |
 
 ## Combos (9Router, DB có sẵn — không tạo mới)
 
@@ -62,6 +64,12 @@ MSWEA_SILENT_STARTUP=1 mini --exit-immediately -m openai/thtung-paid \
 
 # GLM
 opencode run -m ninerouter/thtung-glm --format json "<task + acceptance criteria>"
+
+# Codex CLI
+codex exec -s workspace-write "<task + acceptance criteria>"
+
+# Antigravity CLI (agy)
+agy -p "<task + acceptance criteria>" --dangerously-skip-permissions
 ```
 
 ## Ops
