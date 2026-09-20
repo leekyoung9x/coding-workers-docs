@@ -188,13 +188,27 @@ MSWEA_SILENT_STARTUP="1"
 ### E. Antigravity CLI (`agy`) & AGY-Code Worker
 - **Binary**: `/root/.local/bin/agy` (v1.2.3) trên Linux, `~/.local/bin/agy` trên macOS.
 - **Skill**: `agy-code` (hoặc `antigravity`) với Gemini 3.8 Flash và tùy biến mức suy luận (`low` / `medium` / `high`).
-- **Cơ chế 3 Tài khoản Tự Động Xoay (Auto-Rotation)**:
-  - 3 tài khoản Google OAuth (`leekyoung55124`, `sanggia5512`, `huytung551237`) được quản lý trong 9Router.
-  - Tự động làm mới `accessToken` bằng `refreshToken` trước khi hết hạn (daemon chạy ngầm).
-  - Khi một tài khoản chạm trần quota (429 / Quota Exceeded), hệ thống tự động khóa tạm tài khoản đó (`modelLock`) và trượt sang tài khoản kế tiếp mà không làm gián đoạn tác vụ code.
 - **Lệnh chạy chuẩn**:
   ```bash
-  opencode run --auto -m ninerouter/ag/gemini-3.8-flash-<low|medium|high> --format json "<yêu cầu task>"
+  agy -p "<yêu cầu task + tiêu chí nghiệm thu>" \
+    --model "Gemini 3.8 Flash" \
+    --effort <low|medium|high> \
+    --dangerously-skip-permissions
+  ```
+- **Cơ chế Xoay Tài khoản (Multi-Account Profile Switching)**:
+  Tách riêng thư mục dữ liệu bằng `ANTIGRAVITY_APP_DATA_DIR` (hoặc `HOME`) để mỗi tài khoản có định danh môi trường và session riêng biệt, tránh bị Google gắn cờ dùng chung thiết bị:
+  ```bash
+  # Acc 1
+  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc1 agy -p "<task>" \
+    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
+
+  # Chuyển sang Acc 2 khi Acc 1 cạn quota (429 / ResourceExhausted)
+  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc2 agy -p "<task>" \
+    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
+
+  # Acc 3
+  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc3 agy -p "<task>" \
+    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
   ```
 
 ---
