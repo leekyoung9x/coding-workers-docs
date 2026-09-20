@@ -74,7 +74,7 @@ Tất cả các worker (trừ Muse Code dùng upstream OpenRouter) đều trỏ 
 | `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (mini-SWE) |
 | `thtung-glm` | `xq/glm-5.3-flash` | Phục vụ GLM-5.3-Flash qua OpenCode (~2s) |
 | `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | Chạy chuẩn qua Responses API (muse-shim) & stream |
-| `thtung-agy` | `ag/gemini-3.8-flash-high`, `omni/thtung-agy` | Active qua 2 account Google OAuth trong 9Router |
+| `thtung-agy` | `ag/gemini-3.8-flash-high`, `ag/gemini-3.8-flash-medium`, `ag/gemini-3.8-flash-low` | Active qua 3 account Google OAuth (`leekyoung55124`, `sanggia5512`, `huytung551237`), tự xoay tua khi hết quota |
 | `thtung-gpt` | `exp/gpt-5.6-luna`, `xq/gpt-5-6-luna` | Phục vụ model dòng GPT & Codex CLI (Responses API) |
 
 ---
@@ -149,9 +149,9 @@ requires_openai_auth = true
 
 ### B. mini-SWE-agent (`~/.config/mini-swe-agent/.env`)
 ```bash
-OPENAI_API_KEY="sk-fa5efb56e57fe4b9-drd5jf-be158103"
+OPENAI_API_KEY="sk-fa5<ROTATED - lay tu $HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY>"
 OPENAI_API_BASE="https://router.cutes1tg.online/v1"
-LITELLM_API_KEY="sk-fa5efb56e57fe4b9-drd5jf-be158103"
+LITELLM_API_KEY="sk-fa5<ROTATED - lay tu $HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY>"
 LITELLM_BASE_URL="https://router.cutes1tg.online/v1"
 MSWEA_CONFIGURED="true"
 MSWEA_MODEL_NAME="openai/thtung-paid"
@@ -169,7 +169,7 @@ MSWEA_SILENT_STARTUP="1"
       "name": "9Router",
       "options": {
         "baseURL": "https://router.cutes1tg.online/v1",
-        "apiKey": "sk-fa5efb56e57fe4b9-drd5jf-be158103"
+        "apiKey": "sk-fa5<ROTATED - lay tu $HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY>"
       },
       "models": {
         "thtung-glm": { "name": "GLM-5.3-Flash", "limit": { "context": 200000, "output": 32000 } },
@@ -185,10 +185,17 @@ MSWEA_SILENT_STARTUP="1"
 - Quản lý service: `muse-shim-service {start|stop|restart|status|logs}`.
 - Cấu hình Unity MCP Mini (13 tools cốt lõi) tại `~/.config/muse/settings.json`.
 
-### E. Antigravity CLI (`agy`)
-- Cài đặt nhanh: `curl -fsSL https://antigravity.google/cli/install.sh | bash`.
-- Binary: `~/.local/bin/agy` (v1.2.3).
-- Chạy lần đầu trong terminal để hoàn tất đăng nhập Google OAuth.
+### E. Antigravity CLI (`agy`) & AGY-Code Worker
+- **Binary**: `/root/.local/bin/agy` (v1.2.3) trên Linux, `~/.local/bin/agy` trên macOS.
+- **Skill**: `agy-code` (hoặc `antigravity`) với Gemini 3.8 Flash và tùy biến mức suy luận (`low` / `medium` / `high`).
+- **Cơ chế 3 Tài khoản Tự Động Xoay (Auto-Rotation)**:
+  - 3 tài khoản Google OAuth (`leekyoung55124`, `sanggia5512`, `huytung551237`) được quản lý trong 9Router.
+  - Tự động làm mới `accessToken` bằng `refreshToken` trước khi hết hạn (daemon chạy ngầm).
+  - Khi một tài khoản chạm trần quota (429 / Quota Exceeded), hệ thống tự động khóa tạm tài khoản đó (`modelLock`) và trượt sang tài khoản kế tiếp mà không làm gián đoạn tác vụ code.
+- **Lệnh chạy chuẩn**:
+  ```bash
+  opencode run --auto -m ninerouter/ag/gemini-3.8-flash-<low|medium|high> --format json "<yêu cầu task>"
+  ```
 
 ---
 
