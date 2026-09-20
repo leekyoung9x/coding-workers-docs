@@ -23,7 +23,7 @@
 | Worker | Tệp cấu hình trên Mac | Quyền file | Biến môi trường / Headers chính | Công cụ phụ trợ tích hợp |
 | :--- | :--- | :---: | :--- | :--- |
 | **Muse Code** | `~/.config/muse/env`<br>`~/.config/muse/settings.json` | `600` | `MUSE_SHIM_PROVIDER=generic`<br>`MUSE_SHIM_MODEL=meta/muse-spark-1.3-contributor`<br>`META_API_KEY=local-shim-placeholder` | **Unity MCP Mini (13 tools)**: compile loop, test runner, play scene. |
-| **mini-SWE** | `~/Library/Application Support/mini-swe-agent/.env`<br>*(symlink: `~/.config/mini-swe-agent/.env`)* | `600` | `OPENAI_API_KEY=sk-fa5efb...`<br>`OPENAI_API_BASE=https://router.cutes1tg.online/v1`<br>`MSWEA_MODEL_NAME=openai/thtung-paid` | Bash subshell runner, auto-submit detector, cost guardrails (`-l 0.5`). |
+| **mini-SWE** | `~/Library/Application Support/mini-swe-agent/.env`<br>*(symlink: `~/.config/mini-swe-agent/.env`)* | `600` | `OPENAI_API_KEY="«redacted:sk-…»"`<br>`OPENAI_API_BASE=https://router.cutes1tg.online/v1`<br>`MSWEA_MODEL_NAME=openai/thtung-paid` | Bash subshell runner, auto-submit detector, cost guardrails (`-l 0.5`). |
 | **OpenCode** | `~/.config/opencode/opencode.json`<br>`~/.local/share/opencode/auth.json` | `600` | Provider: `ninerouter` (`@ai-sdk/openai-compatible`)<br>BaseURL: `https://router.cutes1tg.online/v1`<br>Model: `thtung-glm` | Format JSON stream, Git PR inspector, session resume. |
 | **Codex CLI** | `~/.codex/config.toml`<br>`~/.codex/auth.json` | `600` | `wire_api = "responses"`<br>`supports_websockets = false`<br>`requires_openai_auth = true` | Git worktree parallel isolation, sandbox workspace-write. |
 | **Antigravity**| `~/.config/antigravity/`<br>`~/.gemini/antigravity-cli/` | `600` | Managed by Google OAuth (`agy`) | Multi-agent coordination, Google Search integration. |
@@ -177,7 +177,7 @@ Bình thường Hermes sẽ tự động phân tích tech stack để chọn wor
 | **2. mini-SWE**<br>*(Chuyên Backend DeepSeek)* | `dùng mini`, `dùng deepseek`, `qua mini-swe`, `bằng mini` | *"Dùng mini sửa bug tính exp quest trong CleanArch"*<br>*"Viết test API login bằng deepseek"* | Gọi `mini --exit-immediately -y -l 0.5 -m openai/thtung-paid` chạy bash loop giải quyết trong ~28s. |
 | **3. OpenCode**<br>*(Chuyên Review & GLM)* | `dùng opencode`, `dùng glm`, `qua opencode`, `bằng glm` | *"Dùng opencode review diff nhánh feature_pokiwar xem sót gì không"*<br>*"Refactor module payment bằng glm"* | Gọi `opencode run -m ninerouter/thtung-glm` đọc hiểu toàn bộ repo rộng để audit/refactor. |
 | **4. Codex CLI**<br>*(Chuyên Kiến trúc GPT)* | `dùng codex`, `qua codex`, `bằng codex` | *"Dùng codex thiết kế interface cho module Matchmaking"*<br>*"Codex review bảo mật file auth"* | Gọi `codex exec -s workspace-write` hoặc `codex review --base origin/main`. |
-| **5. Antigravity**<br>*(Chuyên Gemini & Đa năng)* | `dùng agy`, `dùng antigravity`, `qua agy`, `bằng agy` | *"Dùng agy phân tích log crash này xem"*<br>*"Qua agy đọc 10 file dump này"* | Gọi `agy -p "<task>" --dangerously-skip-permissions` tận dụng context window 1M+ tokens. |
+| **5. Antigravity (AGY-Code)**<br>*(Chuyên Gemini & Đa năng)* | `dùng agy`, `dùng antigravity`, `qua agy`, `bằng agy`, `dùng agy-code` | *"Dùng agy phân tích log crash này xem"*<br>*"Dùng agy-code sửa bug này (reasoning high)"* | Gọi `opencode run --auto -m ninerouter/ag/gemini-3.8-flash-<low|medium|high>` (tự động xoay 3 tài khoản Google OAuth khi hết quota qua 9Router) hoặc `agy -p "<task>" --dangerously-skip-permissions`. |
 
 > **Quy tắc phối hợp:**
 > - **Chat tự nhiên (không chỉ định worker)**: Hermes tự động nhận diện: nếu file `.cs`/Unity ➔ tự gọi **Muse Code**; nếu Backend (.NET/TS/Go/Python) ➔ tự gọi **mini-SWE (DeepSeek)**.
@@ -190,7 +190,7 @@ Bình thường Hermes sẽ tự động phân tích tech stack để chọn wor
 | Hiện tượng lỗi | Nguyên nhân cốt lõi | Cách khắc phục ngay lập tức |
 | :--- | :--- | :--- |
 | **`muse exec` báo Connection Refused :8787** | `muse-shim` chưa được bật hoặc bị crash | Chạy lệnh: `muse-shim-service restart`<br>Kiểm tra health: `curl http://127.0.0.1:8787/health` |
-| **`mini` báo 401 Unauthorized** | Sai key 9Router hoặc key hết hạn | Kiểm tra file: `~/.config/mini-swe-agent/.env`<br>Đảm bảo `OPENAI_API_KEY="sk-fa5efb56e57fe4b9-drd5jf-be158103"` |
+| **`mini` báo 401 Unauthorized** | Sai key 9Router hoặc key hết hạn | Kiểm tra file: `~/.config/mini-swe-agent/.env`<br>Đảm bảo `OPENAI_API_KEY="sk-fa5<ROTATED - lay tu $HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY>"` |
 | **`opencode` báo Provider Not Found** | Thiếu cấu hình provider `ninerouter` | Kiểm tra file: `~/.config/opencode/opencode.json` đảm bảo có định nghĩa provider `ninerouter`. |
 | **Unity MCP Mini không nhận lệnh** | Unity Editor chưa bật hoặc kẹt WebSocket | Mở Unity Editor dự án `pokiguard_client`. Kiểm tra port 6605/6606 không bị chiếm dụng. |
 | **Codex CLI bị treo lúc khởi động (7s)** | Thử kết nối WebSocket thất bại | Đảm bảo trong `~/.codex/config.toml` đã đặt `supports_websockets = false`. |
