@@ -187,28 +187,17 @@ MSWEA_SILENT_STARTUP="1"
 
 ### E. Antigravity CLI (`agy`) & AGY-Code Worker
 - **Binary**: `/root/.local/bin/agy` (v1.2.3) trên Linux, `~/.local/bin/agy` trên macOS.
+- **Auto-Rotation Runner**: `/root/.local/bin/agy-runner` tự động trượt qua 3 tài khoản khi gặp 429/RESOURCE_EXHAUSTED.
 - **Skill**: `agy-code` (hoặc `antigravity`) với Gemini 3.8 Flash và tùy biến mức suy luận (`low` / `medium` / `high`).
+- **Cơ chế 3 Tài khoản Độc lập**:
+  - `acc1`: `leekyoung55124@gmail.com` (`~/.config/agy-profiles/acc1`)
+  - `acc2`: `sanggia5512@gmail.com` (`~/.config/agy-profiles/acc2`)
+  - `acc3`: `huytung551237@gmail.com` (`~/.config/agy-profiles/acc3`)
+  - Mỗi tài khoản có `installation_uuid` riêng biệt trong `jetski_state.pbtxt`, chống bị Google gắn cờ dùng chung thiết bị.
+  - Tự động đồng bộ token từ 9Router qua script: `python3 /root/ops/agy_profile_sync.py`.
 - **Lệnh chạy chuẩn**:
   ```bash
-  agy -p "<yêu cầu task + tiêu chí nghiệm thu>" \
-    --model "Gemini 3.8 Flash" \
-    --effort <low|medium|high> \
-    --dangerously-skip-permissions
-  ```
-- **Cơ chế Xoay Tài khoản (Multi-Account Profile Switching)**:
-  Tách riêng thư mục dữ liệu bằng `ANTIGRAVITY_APP_DATA_DIR` (hoặc `HOME`) để mỗi tài khoản có định danh môi trường và session riêng biệt, tránh bị Google gắn cờ dùng chung thiết bị:
-  ```bash
-  # Acc 1
-  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc1 agy -p "<task>" \
-    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
-
-  # Chuyển sang Acc 2 khi Acc 1 cạn quota (429 / ResourceExhausted)
-  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc2 agy -p "<task>" \
-    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
-
-  # Acc 3
-  ANTIGRAVITY_APP_DATA_DIR=~/.config/agy-profiles/acc3 agy -p "<task>" \
-    --model "Gemini 3.8 Flash" --effort <low|medium|high> --dangerously-skip-permissions
+  agy-runner -p "<yêu cầu task + tiêu chí nghiệm thu>" --effort <low|medium|high>
   ```
 
 ---
