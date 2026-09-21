@@ -31,16 +31,21 @@ Discord → Hermes        ├──────────────→ OpenC
                                          Google Gemini 3.8 / Claude Opus 4.6
 
 
-Hermes đảm nhiệm:
+Hermes đảm nhiệm (LEAD ORCHESTRATOR ONLY - KHÔNG làm việc của Dev):
 - Discord Gateway & multi-turn session
 - Figma MCP (FULL - 45 tools) & Unity MCP Pro (FULL - 275 tools)
-- Thu thập context & phân tích yêu cầu
-- Routing tác vụ & verify git diff / test suite trước khi báo cáo
+- Thu thập context & phân tích nguyên nhân gốc rễ (Root Cause Recon)
+- Soạn Implementation Plan & Numbered Brief chi tiết
+- Giám sát tiến trình (Watchdog: Chống treo, kẹt loop, xử lý lỗi hạn mức quota/429)
+- Tiếp nhận phản biện kỹ thuật từ Worker & thống nhất phương án (Final Consensus)
+- Nghiệm thu độc lập kết quả đầu ra (đo lại số thật, đối chứng baseline)
 
-Workers đảm nhiệm:
-- Coding agent loop chuyên biệt (bash-centric hoặc TUI runner)
-- Đọc, tìm kiếm, chỉnh sửa file trong repo
-- Chạy test, build, lint, tự fix lỗi biên dịch
+Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
+- Review & phản biện lại kế hoạch với Lead trước khi sửa code
+- Đọc, tìm kiếm, chỉnh sửa code trong repo (100% việc dev)
+- Tự viết testcase (cả regression spec đo số thật, cấm chỉ đo biến cờ)
+- Tự chạy testcase (chu trình RED ➔ GREEN ➔ REFACTOR: Đỏ trước khi sửa)
+- Tự build, lint, sửa lỗi biên dịch trong workspace
 - Cô lập ngữ cảnh (<10k token ban đầu), tránh phình context
 ```
 
@@ -204,6 +209,7 @@ MSWEA_SILENT_STARTUP="1"
 
 ## 6. Tài liệu Chuyên sâu & Benchmark
 
+- 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều và Watchdog chống treo/chết.
 - 📘 **[Hướng dẫn Chi tiết Vận hành 5 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.
 - 📊 **[Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)**: Hướng dẫn đo lường theo chuẩn DeepSWE (Pier runner) và Terminal-Bench (Harbor runner).
 - 📈 **[Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)**:
