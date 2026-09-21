@@ -78,16 +78,61 @@ Tài liệu này xác định nguyên tắc vận hành, ranh giới trách nhi�
   - Testcase phải đo số thật (pixel, mã màu, toạ độ tuyệt đối, số node DOM, status code, payload thực).
   - Tuân thủ chu trình **RED ➔ GREEN**: Chạy test thấy ĐỎ (chứng minh lỗi tồn tại) ➔ Sửa code ➔ Chạy test lại thấy XANH (chứng minh lỗi đã được giải quyết).
 
-### Bước 4: Watchdog — Giám Sát Tiến Trình Chống Treo/Chết (Hermes Lead)
+---
+
+## 4. Quy Tắc Cổng Kiểm Thử 2 Lần Bắt Buộc (Two-Stage Testing Gate)
+
+Tuyệt đối KHÔNG ĐƯỢC tin vào một lần test duy nhất. Mọi task code/sửa lỗi bắt buộc phải vượt qua **2 CỔNG TEST ĐỘC LẬP**:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  CỔNG 1: PRE-DEPLOY LOCAL GATE (Tại Repo / Workspace Cục Bộ)  │
+│                                                              │
+│  - Worker chạy toàn bộ testcase trên bản local.              │
+│  - Điều kiện: XANH 100% (Pass toàn bộ test, 0 compile error, │
+│    không gây lỗi hồi quy / regression).                      │
+│  - ⛔ NẾU LOCAL ĐỎ ➔ CẤM TUYỆT ĐỐI KHÔNG ĐƯỢC DEPLOY.         │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ Local pass 100%
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│               TIẾN HÀNH BUILD & DEPLOY LÊN HOST              │
+│  (Rsync đủ cây, build container, reload service)              │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ Deploy thành công
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│  CỔNG 2: POST-DEPLOY LIVE GATE (Trên Môi Trường Đã Deploy)   │
+│                                                              │
+│  - Chạy lại TOÀN BỘ bộ testcase trực tiếp trên runtime thật: │
+│    live container, live URL, đúng account đối chứng.         │
+│  - Đo số thật trên production/staging (pixel, layout,        │
+│    status code, socket response).                            │
+│  - Loại bỏ hoàn toàn rủi ro: rsync thiếu file, bundle Next.js│
+│    bị cache cũ, sai lệch env giữa local và container.        │
+│  - ⛔ NẾU LIVE ĐỎ ➔ BỊ COI LÀ FALSE-DONE, PHẢI SỬA LẠI NGAY.  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+1. **Lần 1 — Pre-Deploy Local Gate**:
+   - Chạy trên workspace của worker. Phải pass 100% các spec trước khi cho phép tiến hành khâu deploy.
+   - Nếu testcase local còn trượt hoặc vỡ build mà đem deploy là vi phạm quy trình nghiêm trọng.
+2. **Lần 2 — Post-Deploy Live Gate**:
+   - Sau khi deploy xong (ví dụ rsync đủ 4 cây thư mục, Next.js build bundle mới, docker container up), BẮT BUỘC phải kích hoạt test suite chạy lại lần thứ hai nhắm thẳng vào live URL / runtime thật.
+   - Chỉ khi bản live trả về kết quả XANH và đo đúng số thật thì task mới chính thức được đóng.
+
+---
+
+## 5. Watchdog — Giám Sát Tiến Trình Chống Treo/Chết (Hermes Lead)
 - Hermes theo dõi tiến trình nền qua PID được cấp phát:
   - **Kiểm tra mtime**: Sau ~5 phút mà các file mục tiêu không có mtime mới ➔ Worker đang lý thuyết suông (theorizing/looping), cần can thiệp kéo về thực tế.
   - **Bắt vòng lặp vô tận (Looping watchdog)**: Phát hiện hành vi chạy test liên tục 10 lần mà không sửa code, hoặc đo đạc vô nghĩa.
   - **Xử lý sự cố chết/treo & Hết Quota**: Bắt lỗi HTTP 429 / `RESOURCE_EXHAUSTED` để kích hoạt cơ chế xoay profile (ví dụ `agy-runner` tự nhảy sang `acc2`, `acc3`), không để chết tác vụ giữa chừng hoặc đốt sạch ngân sách vô ích.
 
-### Bước 5: Nghiệm Thu Độc Lập Đầu Ra (Hermes Lead)
+## 6. Nghiệm Thu Độc Lập Đầu Ra (Hermes Lead)
 - Báo cáo tóm tắt của worker chỉ là tài liệu tự thuật (self-report), không phải sự thật đã kiểm chứng.
 - Hermes độc lập đo đạc lại:
   - Soát `git diff` xem worker có làm đúng whitelist và không nới lỏng spec cũ hay không.
-  - Chạy toàn bộ bộ test suite (không lọc riêng lẻ) để đảm bảo không gây lỗi hồi quy (no regression).
-  - Đo lại số thật trên artifact đã deploy/build.
+  - Kiểm tra cả 2 lần test: Cổng 1 (Local) đã xanh chưa, Cổng 2 (Live deploy) đã xanh chưa.
+  - Đo lại số thật trên artifact đã deploy/build bằng đúng tài khoản và URL chuẩn.
 - Báo cáo kết quả về Discord: Báo cáo ngắn gọn, tập trung vào số đo thực tế, nêu rõ cái gì ĐÃ XONG và cái gì CHƯA XONG. Tuyệt đối không kể lể lại hành trình.
