@@ -209,6 +209,7 @@ MSWEA_SILENT_STARTUP="1"
 
 ## 6. Tài liệu Chuyên sâu & Benchmark
 
+- 🎞️ **[Cơ chế Frame-to-Frame (clips.json) — Burn pipeline HTML/Spine → sprite frame (frame-to-frame-clips/)](./frame-to-frame-clips/README.md)**: Nguyên lý hoạt hình tua frame, case-study port `stickman-game.html` (rig/pose/keyframe → bake PNG + manifest), định dạng `clips.json`, cách game load (Units.js → preload → UnitRenderer), workflow thêm tướng mới và checklist nghiệm thu. Game chạy100% frame-to-frame (41 tướng); Spine chỉ dùng ở tool preview.
 - 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều và Watchdog chống treo/chết.
 - 📘 **[Hướng dẫn Chi tiết Vận hành 5 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.
 - 📊 **[Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)**: Hướng dẫn đo lường theo chuẩn DeepSWE (Pier runner) và Terminal-Bench (Harbor runner).
