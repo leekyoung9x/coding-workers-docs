@@ -129,6 +129,18 @@ Tuyệt đối KHÔNG ĐƯỢC tin vào một lần test duy nhất. Mọi task 
   - **Bắt vòng lặp vô tận (Looping watchdog)**: Phát hiện hành vi chạy test liên tục 10 lần mà không sửa code, hoặc đo đạc vô nghĩa.
   - **Xử lý sự cố chết/treo & Hết Quota**: Bắt lỗi HTTP 429 / `RESOURCE_EXHAUSTED` để kích hoạt cơ chế xoay profile (ví dụ `agy-runner` tự nhảy sang `acc2`, `acc3`), không để chết tác vụ giữa chừng hoặc đốt sạch ngân sách vô ích.
 
+### 5b. Cron watchdog đi kèm mỗi worker (BẮT BUỘC)
+- Mỗi lần spawn worker (muse/mini/glm/codex/agy) **phải tạo kèm 1 cron job** theo dõi tiến độ liên tục và báo cáo về chat — user không phải hỏi "xong chưa".
+- Tạo cron **kèm `--model` + `--provider` ngay lúc tạo** (không tạo trước set sau):
+```bash
+hermes cron create --model thtung-muse --provider custom:THTUNG \
+  --name "watch-<TÊN-WORKER>" --deliver origin "every 1m" \
+  "<prompt watchdog: pgrep worker/Unity, tail log brief, check artifact + curl endpoint, báo tiến độ ≤10 dòng; worker xong hoặc treo >10 phút thì báo ngay>"
+```
+- ⚠️ Bẫy đã gặp thật (2026-10-02): tạo cron **không** kèm model/provider rồi `edit` thêm sau → job chạy với config cũ, fail liên tiếp `No LLM provider configured`. Luôn tạo kèm từ đầu.
+- Khi worker xong (REPORT tồn tại) hoặc chết: báo kết quả cuối 1 lần rồi **xóa cron** (`hermes cron remove <job_id>`) để khỏi spam.
+- Tên cron theo quy ước `watch-<TÊN-BRIEF>` để dễ truy vết worker nào.
+
 ## 6. Nghiệm Thu Độc Lập Đầu Ra (Hermes Lead)
 - Báo cáo tóm tắt của worker chỉ là tài liệu tự thuật (self-report), không phải sự thật đã kiểm chứng.
 - Hermes độc lập đo đạc lại:
