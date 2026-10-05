@@ -124,3 +124,17 @@ theo đúng thứ tự này:
 3. Rồi mới báo user + update bảng theo dõi.
 Xóa cron trước vì cron thừa tốn tài nguyên mỗi phút; nghiệm thu sau vì nó không
 chạy đi đâu được. Không bao giờ làm ngược lại.
+
+## 15. Worker chết liên tục lúc spawn = kiểm tra /tmp đầy TRƯỚC (2026-10-05)
+
+M172/M173 chết 5+ lần liên tiếp (`tcsetattr`, SIGTERM lúc khởi động), log đứng yên
+ở 287 byte. Nguyên nhân KHÔNG phải RAM (trống 7.5GB) hay OOM — mà là `/tmp` đầy
+76% (12GB/16GB) do rác luồng khác (`raw.zip` 3.9GB, `Assets.zip`, UnitySetup,
+file `.il`). Worker spawn cần ghi tmp, hết chỗ là chết ngay lúc khởi động.
+Checklist khi worker chết lúc spawn 2+ lần:
+1. `df -h /tmp` trước — đầy >70% thì dọn.
+2. `du -sh /tmp/* | sort -rh` tìm thủ phạm; `lsof`/`fuser` xem ai đang dùng.
+3. File không ai dùng: `mv` vào `/root/tmp-backup-<ngày>/` (không xóa hẳn),
+   rác build (`.il`, cache) thì xóa. File luồng khác đang dùng (MINI-57 build APK)
+   thì GIỮ, hỏi chủ dự án trước khi đụng.
+4. Spawn từng worker 1 (cách nhau 15s), không spawn 2 con cùng lúc khi /tmp chật.
