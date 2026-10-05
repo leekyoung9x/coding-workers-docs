@@ -113,3 +113,14 @@ sau → job chạy với config cũ, fail liên tiếp "No LLM provider configur
 Luôn tạo kèm từ đầu. Khi worker xong hoặc chết: báo kết quả cuối 1 lần rồi xóa
 cron (`hermes cron remove <job_id>`) để khỏi spam. Tên cron theo quy ước
 `watch-<TÊN-BRIEF>` để dễ truy vết worker nào.
+
+## 14. RULE THÉP: worker exit là xóa cron TRƯỚC, nghiệm thu SAU (2026-10-05)
+
+M169 xong từ 00:34 nhưng cron `watch-M169` chạy vô ích tới sáng (mỗi phút 1 lần)
+Vì Lead kiểm log thấy xong mà quên xóa cron. Từ giờ checklist "xong việc" bắt buộc
+theo đúng thứ tự này:
+1. Worker exit → **xóa cron NGAY** (`hermes cron remove watch-<TÊN>`), chưa cần biết kết quả.
+2. Rồi mới đọc log, nghiệm thu độc lập.
+3. Rồi mới báo user + update bảng theo dõi.
+Xóa cron trước vì cron thừa tốn tài nguyên mỗi phút; nghiệm thu sau vì nó không
+chạy đi đâu được. Không bao giờ làm ngược lại.
