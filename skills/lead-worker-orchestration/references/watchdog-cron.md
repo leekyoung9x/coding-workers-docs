@@ -1,22 +1,26 @@
-# Watchdog Cron + Evidence-Only Status (every worker dispatch)
+# Worker Watchdog and Independent Acceptance
 
-Every worker dispatch (muse/mini/glm/codex/agy) gets a watchdog cron at spawn time — never later, never on request.
+## When to use
+
+Attach a watchdog in the same turn as each worker dispatch. For this recovery workflow cadence is 3 minutes; completion/new-result events request immediate verification instead of waiting for next tick. Use `references/worker-supervision-and-gates.md` as the enforcement contract.
 
 ## Procedure
 
-1. Spawn the worker, note the start time.
-2. Immediately create the cron: `hermes cron create --model <model> --provider <provider> --name "watch-<BRIEF>" --deliver origin "every 5m" "<prompt>"`. Pass model+provider AT CREATION — a job created without them runs under stale config and fails every tick.
-3. The watchdog prompt checks, in order: worker process alive (pgrep) → log tail (byte count + last lines) → artifact/report file exists → direct re-measurement of the target state (DB SELECT / HTTP status), never log text alone. Cap the report at ~10 lines.
-4. Terminal states: report file exists → report final numbers once; no process + no log change for >10 min + no report → report the stall immediately.
-5. Remove the cron when the worker finishes (`hermes cron remove <job-id>`) so it never spams.
+1. Record task/run/attempt, owned PID/PGID or unit, start fingerprint, stage/deadline and exact output paths. Create watchdog with installed CLI schema, explicit model/provider for LLM jobs, workdir, skills and concrete delivery destination. Quote `"every 3m"` as one argument.
+2. Cheap no-agent monitoring reads durable supervisor state. Do not discover/kill processes from task text in argv. Heartbeat/CPU/log growth are liveness only; progress needs a verified checkpoint.
+3. One tick without progress: inspect stage/child/wait reason and take a documented action. Two unchanged ticks: STALLED, diagnose or controlled stop under ownership/deadline rules. A valid compiler/link child inside its deadline is not killed for quiet logs.
+4. New artifact/completion: claim acceptance lock, independently rerun exact tests/measurements on same build/environment, inspect new screenshots for visual claims. Worker exit 0/report PASS only means IMPLEMENTED, never ACCEPTED.
+5. Record ran/pass/fail/skip, artifact/hash, failure-cause confidence and next action. Preserve unfinished patches and fixture cleanup. At most two attempts with same unexplained failure signature before BLOCKED and diagnosis, never blind respawn.
+6. Pause/transfer per-task watcher after terminal verified verdict; preserve history. Mission controller continues unresolved dependencies until user's whole deliverable is verified or explicitly blocked. Do not remove monitoring just because a report exists.
 
-## Status answers to the user
+## Reporting
 
-- Cite only fresh evidence: process start time vs now, log byte count and whether it moved, last measured numbers. Never infer progress from elapsed time since spawn.
-- If the log has not moved for 10–20 min while the process lives, say so plainly, state the next action (kill + respawn with a narrower brief), then execute it in the same turn.
+Report `stage | new verified evidence | blocker | action already taken`, at most ten lines for routine ticks. Say NO_PROGRESS if no checkpoint. Never invent percentages, ETAs or signal senders; SIGTERM/SIGKILL identify signals, not causes.
 
-## Pitfalls
+## CLI and limits
 
-- Report completion only after an independent re-measurement matches the worker's claim — self-reports of "done, all numbers verified" have been wrong on the numbers, because the check that produced them is the same one that produced the work.
-- Before reporting any compensation/refund complete, verify coverage against the FULL catalog (every tier/lever per group), not just the rows the worker touched — partial-tier payouts pass the worker's own checks and fail the player's.
-- A cron created without model/provider cannot be repaired by editing it later; delete and recreate it with both flags from the start.
+Load current `hermes cron create/edit --help` before changes. Notice syntax: `hermes cron create [options] schedule [prompt]` takes `schedule` and `prompt` as POSITIONAL arguments (e.g. `hermes cron create [flags] "every 3m" "Watchdog prompt"`). Passing `--schedule` or `--message` causes CLI parsing errors (`unrecognized arguments`). Do not hardcode obsolete claims that model/provider pins cannot be edited. No-agent scripts cost no inference; monitor gates suppress unchanged LLM runs. Verify actual scheduler behavior/delivery with a real run. These primitives need tested adapters; they do not automatically own arbitrary dedicated CLIs.
+
+## Verification
+
+Failure-inject wrong child exit, stale PID, cleanup-pattern collision, duplicate dispatch, quiet valid build, heartbeat-only stall, stale PNG, false visual PASS and verifier rejection. A watcher only reporting green text or treating an exited job as alive fails its own acceptance.

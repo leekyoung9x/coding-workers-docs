@@ -26,7 +26,7 @@ When the repo's URP assets were saved by a newer editor than the build machine's
 
 ## 4. Worker sequencing: never mutate Assets/ while Unity builds
 
-Moving/deleting files under `Assets/` mid-build triggers a reimport that corrupts the running build. Hold file-cleanup briefs until no Unity process is alive (`pgrep -f 'Editor/Unity'` empty), and forbid cleanup workers from spawning Unity at all.
+Do not move/delete assets while a build owns the project lock. Verify actual owned Unity executable/project/start fingerprint through the supervisor; `pgrep -f` can select brief text or the monitoring shell. Wait for lock release before cleanup, and never let cleanup start a competing Editor. Preserve active builds and do not kill by a broad argv regex.
 
 ## 5. No progress percentages — report position, not %
 

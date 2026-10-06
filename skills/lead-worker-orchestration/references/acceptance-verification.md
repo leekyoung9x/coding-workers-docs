@@ -2,11 +2,21 @@
 
 The worker's report is a hypothesis. These rules each caught a real wrong answer.
 
+For recurring deaths, stalled leads or false PASS, use `references/worker-supervision-and-gates.md`: enforce process ownership, durable checkpoints and run-bound evidence mechanically instead of adding another prose-only rule.
+
 > Briefing a migration/backfill that touches rows the players own — invariants that must actually fail,
 one-directional deltas, proving the gate reproduces the real incident, secret and push hygiene:
 > see `references/migration-data-integrity.md`.
 
 > Worker-environment traps that produce false evidence (no MCP access / side tokens in the worker CLI — pre-fetch gated artefacts yourself; a self-regenerating visual baseline certifies a blank canvas): see `references/worker-environment-traps.md`.
+
+## 0. Luật nghiệm thu (user chốt 06/10/2026 — bắt buộc, không ngoại lệ)
+
+- KHÔNG ảnh + KHÔNG số đo độc lập = CHƯA XONG. Cấm báo "xong 80%", "cơ bản xong", "worker sống" thay cho kết quả.
+- Worker chết giữa chừng mà chưa ra artifact = FAIL, nói thẳng fail + nguyên nhân, không báo vòng vo.
+- Báo tiến triển bằng checkpoint đã kiểm: RED đúng triệu chứng, giả thuyết bị bác bỏ, compile/build có artifact hash mới, hoặc một gate đã chạy. PID còn sống, log dài thêm và git HEAD chỉ là liveness, không phải tiến triển tính năng.
+- Một tick không có checkpoint: kiểm stage, child process và lý do đang chờ; chọn hành động cụ thể. Hai tick 3 phút không có checkpoint mới: đánh dấu STALLED và can thiệp, không chờ người dùng. Build đang link với deadline hợp lệ không bị kill chỉ vì log im.
+- Artifact mới hoặc completion event phải kích hoạt nghiệm thu độc lập ngay; worker kết thúc chỉ chuyển IMPLEMENTED, không tự chuyển ACCEPTED. Quản lý run/checkpoint bền vững và đối chiếu build/environment trước khi báo kết quả.
 
 ## 1. An "assert the collection is empty" test that never prints the collection is unfalsifiable
 
@@ -118,8 +128,7 @@ no file. Three cheap checks before accepting "done":
   (grep the new symbol in the artifact that actually serves traffic).
 - **Child processes** — no build/test/deploy process under it means it never reached the build phase.
 
-Report its own PID from the launcher's command line, and re-dispatch the identical brief rather than waiting on a
-process that has already exited.
+Record the real worker PID/PGID plus start fingerprint and child exit status; the launcher must return the child's code instead of finishing with a successful echo. Do not re-dispatch an identical brief after an unexplained death. Diagnose the failure signature, preserve partial artifacts, and allow at most two attempts with the same signature before BLOCKED and a diagnostic task.
 
 A worker that dies **mid-verify** leaves the environment hot: check for a server it started still listening on its
 port and stop it before your own run, or your run attaches to the stale instance and measures the old build. Treat
@@ -193,6 +202,7 @@ first tester of your own errors.
   on sight.
 - Downscale before viewing: full-size PNGs time out the vision tool. Thumbnail to ≤640px (plus zoomed crops on the
   disputed area) before calling vision.
+- Vision misattributes spacing (outer container padding vs inner input padding look identical in pixels) — confirm any 'dính mép / cắt viền' claim with `getBoundingClientRect` + computed-style numbers before briefing the fix, or you patch the wrong selector while the numbers already say which layer is guilty.
 - When the deliverable must reuse provided art, the brief must name the exact source (file + panel/region),
   explicitly forbid redrawing, and require a provenance table (`part | crop x,y,w,h | reconstructed?`) plus closeup
   proof shots. A worker with an implicit source constraint defaults to redrawing from scratch.
@@ -218,8 +228,7 @@ Rules:
 
 ## 18. A killed worker's partial work is inventory, not garbage — salvage before re-dispatching
 
-Exit 143 is SIGTERM (killed from outside / OOM), not a code failure; it says nothing about whether
-the work was correct. Do not re-issue the original brief from zero. Salvage first:
+Exit 143 identifies SIGTERM and exit 137 identifies SIGKILL; neither identifies the sender or proves OOM. Correlate process start time, supervisor stop records, kernel/cgroup memory events and tool timeout logs before attributing the cause; current free RAM does not rule out a historical or cgroup-limited OOM. Do not re-issue the original brief from zero. Salvage first:
 
 - Read the log tail for the last GREEN checkpoint (spec names + measured numbers), not just the exit code.
 - Diff EVERY repo in the workspace, including nested ones (`git -C <subdir> status` / `diff`) — root
@@ -231,4 +240,22 @@ the work was correct. Do not re-issue the original brief from zero. Salvage firs
   its starting base, with step 1 = verify those artifacts still exist (STOP and report if missing).
   Attribute pre-existing dirt before blaming anyone (§14): mtime + `git log` on the path decides whether
 a dirty file belongs to the dead run or predates it.
+
+## 19. Visual gates must assert on pixels, not on log lines — and freeze the working harness
+
+A script that logs an "opened" line and screenshots later (or derives `popup_opened=True` from console text) can report PASS while the pixels show the base screen with nothing open. For any visual gate, the assertion must measure the artifact itself at the moment — pixel-region diff, DOM/canvas node presence — with the screenshot saved next to the verdict; a log-derived boolean is never visual proof, and the lead still opens the image before relaying PASS.
+
+Beware of false positives from whole-canvas pixel diffs on animated scenes: a naive `pixdiff > threshold` on a live game board (falling gems, idle animations, floating damage numbers) passes on background motion alone even when a modal completely failed to render. For modal/popup acceptance, assert on the **modal bounding box**, modal-specific text via OCR, or overall canvas luminance dimming from the modal's overlay background.
+
+For full-screen / fit-inside modal verification: asserting that a central panel renders is not enough. The background overlay must cover all 4 viewport edges (including the bottom edge, with no gap exposing the underlying scene/footer). If the modal scales down for fit-inside, the dark scrim must reside on the root Canvas, not inside the scaled modal container, or it scales down with the modal and leaves a bright un-darkened gap at the bottom/edges. Development console overlays (e.g. Unity Development Console, FPS bars triggered by `Debug.LogError` in isolated harnesses) must not obscure interactive controls (like "Sử dụng" or close buttons) in acceptance screenshots. Measure uniform aspect-ratio scaling (fit-inside) with margin on all sides across declared viewports.
+
+Always distinguish between isolated visual test harnesses (e.g. direct panel hook `?pokidiagreal`, local port) and genuine authenticated E2E flows (login → hall → live match room → in-match button click → server packet). An isolated UI harness certifies only layout/geometry/pixel rendering; it can never certify match entry or E2E feature completeness. E2E acceptance test paths must never use diagnostic `SendMessage` or engine-internal hooks (e.g. `SendMessage('Btn_ChinhPhuc', 'OnClick')`) to bypass game navigation; cases must execute real Playwright mouse clicks on canvas coordinates to expose raycast blockers, missing button instances, and interaction bugs. Test suite manifests must verify that every referenced evidence file actually exists on disk (`os.path.isfile` and non-empty `getsize > 0`) before accepting a PASS verdict — a harness recording nonexistent evidence paths must fail-closed.
+
+Always distinguish between isolated test builds (`webgl-fast/`, local port) and live promoted builds (`build/webgl/`, production URL). When a worker verifies a feature in a fast-iteration build, state clearly that it is not yet promoted to the live URL — otherwise the owner opens the live URL, sees an older build without the feature, and concludes nothing was done.
+
+Once an e2e script produces a real passing artifact, freeze it as the standard (`e2e_<feature>.py`): later briefs must reuse and repair it, never rewrite the harness from scratch. From-zero rewrites regress steps the frozen script already passed (new OCR anchors, new timing, new failure modes) while looking like progress.
+
+## 20. Resolve test credentials and targets yourself — never bill the owner for what the environment holds
+
+Resolve the declared dev account and credential source without exposing secrets; never ask for a password in chat or copy one into a brief, argv or log. For browser credential entry use the vault workflow; non-browser tests use protected secret references. DB password hashes are not recoverable plaintext. Run acceptance against an explicitly isolated local/dev auth, API, WS and DB, never production. Enforce the endpoint allowlist before sending requests, verify environment/build IDs, and investigate input/transport/config evidence before claiming a password changed.
 
