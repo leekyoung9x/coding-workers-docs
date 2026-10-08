@@ -26,6 +26,11 @@ Discord → Hermes        ├──────────────→ OpenC
                         │                  ↓ (Responses API / HTTPS fallback)
                         │                9Router: thtung-gpt → GPT-5.6 Luna
                         │
+                        ├──────────────→ Craft RPG (mini + craft CLI)
+                        │                  ↓ (OpenAI-compatible qua mini)
+                        │                9Router: thtung-paid → DeepSeek V4.1 Flash
+                        │                (Craft CLI local-only: validate offline, push thủ công)
+                        │
                         └──────────────→ Antigravity CLI (agy)
                                            ↓ (Google Sign-In OAuth / thtung-agy)
                                          Google Gemini 3.8 / Claude Opus 4.6
@@ -59,12 +64,13 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 | **codex** skill | `~/.hermes/skills/autonomous-ai-agents/codex/` | `~/.hermes/skills/autonomous-ai-agents/codex/` | 1.0.1 | Điều phối coding/review cho OpenAI Codex CLI |
 | **opencode** skill | `~/.hermes/skills/glm-code/` | `~/.hermes/skills/autonomous-ai-agents/opencode/` | 1.2.0 | Điều phối tác vụ qua OpenCode CLI |
 | **antigravity** skill | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | 1.0.0 | Điều phối coding cho Google Antigravity CLI (`agy`) |
-| **Muse Code CLI** | `/root/.local/bin/muse` | `~/.local/bin/muse` | 1.2.1 | CLI native của Meta (kèm `unity-mini.js` 13 tools) |
+| **Muse Code CLI** | `/root/.local/bin/muse` | `~/.local/bin/muse` | 1.4.2 | CLI native của Meta (kèm `unity-mini.js` 13 tools) |
 | **muse-shim** | `/root/ops/muse-shim/` | `~/.local/share/muse-shim/`<br>`~/.local/bin/muse-shim` | 0.4.0 | Shim proxy loopback `:8787` ➔ Responses API |
 | **mini-SWE-agent** | `/root/.local/bin/mini` | `~/.local/bin/mini` | 2.4.6 | Agent ~100 dòng Python, bash-only (DeepSeek via 9Router) |
 | **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
 | **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
 | **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
+| **Craft CLI** | `/usr/local/bin/craft` | `/usr/local/bin/craft` | 0.1.8 | Craft RPG CLI (login OAuth, validate/push world files) |
 
 ---
 
@@ -205,9 +211,39 @@ MSWEA_SILENT_STARTUP="1"
   agy-runner -p "<yêu cầu task + tiêu chí nghiệm thu>" --effort <low|medium|high>
   ```
 
+## 6. Craft RPG Worker — AI World Builder
+
+Craft là worker đặc biệt: không code repo, chỉ xây world files (characters, locations, items) cho game RPG chạy AI Game Master.
+
+**Cơ chế**:
+- **LLM**: `mini-SWE-agent` + 9Router `thtung-paid` (DeepSeek V4.1 Flash) — combo duy nhất còn chạy ổn qua JSON chat (thtung-muse trả rỗng, thtung-glm 403).
+- **Craft CLI**: `craft 0.1.8` (`npm install -g @craftrpgs/cli`) chỉ dùng validate/push — **KHÔNG có API**, chỉ OAuth browser.
+- **Login (1 lần)**: VPS headless nên SSH forward port: `ssh -L 36953:127.0.0.1:36953 root@66.135.0.13`, rồi trên VPS `craft login`, mở URL bằng browser PC.
+- **Workspace**: `/poki/craft-worlds/` — mỗi brief viết world vào folder riêng, `craft check` validate offline trước khi `craft push`.
+
+**Runner**:
+```bash
+CRAFT_WS=/poki/craft-worlds bash /poki/coding-workers-docs/run_craft9r_brief.sh BRIEF_CRAFT_POC01
+```
+
+**Brief format** (VD `/poki/craft-worlds/BRIEF_CRAFT_POC01.md`):
+```markdown
+You are building an AI RPG world for Craft (craftrpgs.com). Work in /poki/craft-worlds/poc01/.
+
+Requirements:
+- Create 3 characters (warrior, mage, rogue) with stat blocks.
+- Create 2 locations (tavern, dungeon entrance) with descriptions.
+- All files in Markdown following Craft conventions.
+- Run `craft check` before finishing to validate format.
+
+Success criteria: craft check shows 0 errors, all files committed.
+```
+
+**Sau khi worker xong**: kiểm `craft check`, rồi `cd /poki/craft-worlds/poc01 && craft push` để đưa lên server.
+
 ---
 
-## 6. Tài liệu Chuyên sâu & Benchmark
+## 7. Tài liệu Chuyên sâu & Benchmark
 
 - 🎞️ **[Cơ chế Frame-to-Frame (clips.json) — Burn pipeline HTML/Spine → sprite frame (frame-to-frame-clips/)](./frame-to-frame-clips/README.md)**: Nguyên lý hoạt hình tua frame, case-study port `stickman-game.html` (rig/pose/keyframe → bake PNG + manifest), định dạng `clips.json`, cách game load (Units.js → preload → UnitRenderer), workflow thêm tướng mới và checklist nghiệm thu. Game chạy100% frame-to-frame (41 tướng); Spine chỉ dùng ở tool preview.
 - 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều và Watchdog chống treo/chết.
