@@ -6,7 +6,7 @@ Các **Dedicated Worker CLI** sở hữu coding loop độc lập (quản lý re
 
 ---
 
-## 1. Kiến trúc Tổng thể (5 Workers)
+## 1. Kiến trúc Tổng thể (6 Workers)
 
 ```text
                         ┌──────────────→ Muse Code CLI (muse)
@@ -25,6 +25,10 @@ Discord → Hermes        ├──────────────→ OpenC
                         ├──────────────→ OpenAI Codex CLI (codex)
                         │                  ↓ (Responses API / HTTPS fallback)
                         │                9Router: thtung-gpt → GPT-5.6 Luna
+                        │
+                        ├──────────────→ Claude Code CLI (claude)
+                        │                  ↓ (Messages API / OAuth hoặc API key)
+                        │                Direct Anthropic: Claude Sonnet 4.6 / Opus / Haiku
                         │
                         └──────────────→ Antigravity CLI (agy)
                                            ↓ (Google Sign-In OAuth / thtung-agy)
@@ -58,12 +62,14 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 | **muse-code** skill | `~/.hermes/skills/muse-code/` | `~/.hermes/skills/autonomous-ai-agents/muse-code/` | 1.0.0 | Điều phối task khó/long-horizon cho Muse Code CLI (Reasoning: `xhigh`) |
 | **codex** skill | `~/.hermes/skills/autonomous-ai-agents/codex/` | `~/.hermes/skills/autonomous-ai-agents/codex/` | 1.0.1 | Điều phối coding/review cho OpenAI Codex CLI |
 | **opencode** skill | `~/.hermes/skills/glm-code/` | `~/.hermes/skills/autonomous-ai-agents/opencode/` | 1.2.0 | Điều phối tác vụ qua OpenCode CLI |
+| **claude-code** skill | `~/.hermes/skills/autonomous-ai-agents/claude-code/` | `~/.hermes/skills/autonomous-ai-agents/claude-code/` | 2.2.1 | Điều phối coding/PR review cho Claude Code CLI (Anthropic) |
 | **antigravity** skill | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | `~/.hermes/skills/autonomous-ai-agents/antigravity/` | 1.0.0 | Điều phối coding cho Google Antigravity CLI (`agy`) |
 | **Muse Code CLI** | `/root/.local/bin/muse` | `~/.local/bin/muse` | 1.4.2 | CLI native của Meta (kèm `unity-mini.js` 13 tools) |
 | **muse-shim** | `/root/ops/muse-shim/` | `~/.local/share/muse-shim/`<br>`~/.local/bin/muse-shim` | 0.4.0 | Shim proxy loopback `:8787` ➔ Responses API |
 | **mini-SWE-agent** | `/root/.local/bin/mini` | `~/.local/bin/mini` | 2.4.6 | Agent ~100 dòng Python, bash-only (DeepSeek via 9Router) |
 | **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
 | **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
+| **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI, OAuth hoặc `ANTHROPIC_API_KEY` |
 | **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
 
 ---
@@ -190,7 +196,32 @@ MSWEA_SILENT_STARTUP="1"
 - Quản lý service: `muse-shim-service {start|stop|restart|status|logs}`.
 - Cấu hình Unity MCP Mini (13 tools cốt lõi) tại `~/.config/muse/settings.json`.
 
-### E. Antigravity CLI (`agy`) & AGY-Code Worker
+### E. Claude Code CLI (`claude`) — Anthropic Worker
+- **Binary**: `/usr/local/bin/claude` (v2.1.295) trên cả Linux và macOS.
+- **Skill**: `claude-code` (v2.2.1) — điều phối coding, PR review, refactor qua Hermes.
+- **Auth**: OAuth browser (`claude auth login`) hoặc `ANTHROPIC_API_KEY` env var.
+- **Models**: Claude Sonnet 4.6 (default), Opus, Haiku — direct Anthropic API, không qua 9Router.
+- **2 Chế độ**:
+  - **Print mode** (`-p`): one-shot non-interactive, return kết quả JSON/text, tự động approve permissions — tốt nhất cho Hermes orchestration.
+  - **Interactive mode**: TUI REPL qua tmux, hỗ trợ multi-turn conversation, slash commands (`/review`, `/compact`), cần handle dialog (workspace trust + permissions).
+- **Print mode flags quan trọng**:
+  ```bash
+  claude -p "task description" \
+    --model sonnet \
+    --effort medium \
+    --max-turns 10 \
+    --max-budget-usd 5.0 \
+    --allowedTools "Read,Edit,Bash" \
+    --output-format json \
+    --dangerously-skip-permissions
+  ```
+- **Lệnh chạy chuẩn qua Hermes** (workdir `/poki/project`):
+  ```bash
+  cd /poki/project && claude -p "Fix auth bug in src/auth.py" \
+    --allowedTools "Read,Edit" --max-turns 10 --output-format json
+  ```
+
+### F. Antigravity CLI (`agy`) & AGY-Code Worker
 - **Binary**: `/root/.local/bin/agy` (v1.2.3) trên Linux, `~/.local/bin/agy` trên macOS.
 - **Auto-Rotation Runner**: `/root/.local/bin/agy-runner` tự động trượt qua 3 tài khoản khi gặp 429/RESOURCE_EXHAUSTED.
 - **Skill**: `agy-code` (hoặc `antigravity`) với Gemini 3.8 Flash và tùy biến mức suy luận (`low` / `medium` / `high`).
@@ -211,7 +242,7 @@ MSWEA_SILENT_STARTUP="1"
 
 - 🎞️ **[Cơ chế Frame-to-Frame (clips.json) — Burn pipeline HTML/Spine → sprite frame (frame-to-frame-clips/)](./frame-to-frame-clips/README.md)**: Nguyên lý hoạt hình tua frame, case-study port `stickman-game.html` (rig/pose/keyframe → bake PNG + manifest), định dạng `clips.json`, cách game load (Units.js → preload → UnitRenderer), workflow thêm tướng mới và checklist nghiệm thu. Game chạy100% frame-to-frame (41 tướng); Spine chỉ dùng ở tool preview.
 - 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều và Watchdog chống treo/chết.
-- 📘 **[Hướng dẫn Chi tiết Vận hành 5 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.
+- 📘 **[Hướng dẫn Chi tiết Vận hành 6 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.
 - 📊 **[Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)**: Hướng dẫn đo lường theo chuẩn DeepSWE (Pier runner) và Terminal-Bench (Harbor runner).
 - 📈 **[Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)**:
   - **Single-File Bugfix**: mini-SWE hoàn thành trong **34s** (6 bước) vs Hermes mất **85s** (mini-SWE nhanh hơn 2.5 lần).
