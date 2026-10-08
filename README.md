@@ -27,8 +27,8 @@ Discord → Hermes        ├──────────────→ OpenC
                         │                9Router: thtung-gpt → GPT-5.6 Luna
                         │
                         ├──────────────→ Claude Code CLI (claude)
-                        │                  ↓ (Messages API / OAuth hoặc API key)
-                        │                Direct Anthropic: Claude Sonnet 4.6 / Opus / Haiku
+                        │                  ↓ (Messages API qua XQ API wrapper)
+                        │                XQ API: Claude Sonnet 4.6 / Opus 4.6 / Haiku 5.5
                         │
                         └──────────────→ Antigravity CLI (agy)
                                            ↓ (Google Sign-In OAuth / thtung-agy)
@@ -70,6 +70,7 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 | **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
 | **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
 | **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI, OAuth hoặc `ANTHROPIC_API_KEY` |
+| **claude-xq-wrapper** | `/poki/coding-workers-docs/claude-xq-wrapper.py` | N/A | 1.0.0 | Python wrapper gọi XQ API thay vì Anthropic trực tiếp |
 | **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
 
 ---
@@ -196,30 +197,30 @@ MSWEA_SILENT_STARTUP="1"
 - Quản lý service: `muse-shim-service {start|stop|restart|status|logs}`.
 - Cấu hình Unity MCP Mini (13 tools cốt lõi) tại `~/.config/muse/settings.json`.
 
-### E. Claude Code CLI (`claude`) — Anthropic Worker
-- **Binary**: `/usr/local/bin/claude` (v2.1.295) trên cả Linux và macOS.
+### E. Claude Code CLI (`claude`) — XQ API Worker
+- **Binary**: `/usr/local/bin/claude` (v2.1.295) — CLI gốc của Anthropic (không dùng trực tiếp).
+- **Wrapper**: `/poki/coding-workers-docs/claude-xq-wrapper.py` (v1.0.0) — Python script giả lập `-p` mode, gọi XQ API thay vì Anthropic.
 - **Skill**: `claude-code` (v2.2.1) — điều phối coding, PR review, refactor qua Hermes.
-- **Auth**: OAuth browser (`claude auth login`) hoặc `ANTHROPIC_API_KEY` env var.
-- **Models**: Claude Sonnet 4.6 (default), Opus, Haiku — direct Anthropic API, không qua 9Router.
-- **2 Chế độ**:
-  - **Print mode** (`-p`): one-shot non-interactive, return kết quả JSON/text, tự động approve permissions — tốt nhất cho Hermes orchestration.
-  - **Interactive mode**: TUI REPL qua tmux, hỗ trợ multi-turn conversation, slash commands (`/review`, `/compact`), cần handle dialog (workspace trust + permissions).
-- **Print mode flags quan trọng**:
+- **Models qua XQ API**: `claude-haiku-5-5` (default), `claude-sonnet-4-6`, `claude-opus-4-6`.
+- **API Key**: Hardcoded trong wrapper (XQ key `sk-_4XS1w...`), endpoint `https://xqapi.com/v1/messages`.
+- **Chế độ hoạt động**: One-shot print mode only — nhận brief, gọi XQ API, trả JSON tương thích Claude Code format.
+- **Flags hỗ trợ**:
   ```bash
-  claude -p "task description" \
-    --model sonnet \
-    --effort medium \
-    --max-turns 10 \
-    --max-budget-usd 5.0 \
-    --allowedTools "Read,Edit,Bash" \
-    --output-format json \
+  python3 /poki/coding-workers-docs/claude-xq-wrapper.py \
+    -p "task description" \
+    --model haiku|sonnet|opus \
+    --output-format json|text \
     --dangerously-skip-permissions
   ```
-- **Lệnh chạy chuẩn qua Hermes** (workdir `/poki/project`):
+- **Runner chuẩn**: `/poki/coding-workers-docs/run_claude_brief.sh`
   ```bash
-  cd /poki/project && claude -p "Fix auth bug in src/auth.py" \
-    --allowedTools "Read,Edit" --max-turns 10 --output-format json
+  bash run_claude_brief.sh /path/to/brief.md [haiku|sonnet|opus]
   ```
+  Script tự động:
+  - Đọc brief từ file markdown
+  - `cd` vào project dir (dirname của brief)
+  - Gọi wrapper với model được chọn
+  - In JSON output ra stdout
 
 ### F. Antigravity CLI (`agy`) & AGY-Code Worker
 - **Binary**: `/root/.local/bin/agy` (v1.2.3) trên Linux, `~/.local/bin/agy` trên macOS.
