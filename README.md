@@ -69,8 +69,8 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 | **mini-SWE-agent** | `/root/.local/bin/mini` | `~/.local/bin/mini` | 2.4.6 | Agent ~100 dòng Python, bash-only (DeepSeek via 9Router) |
 | **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
 | **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
-| **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI, OAuth hoặc `ANTHROPIC_API_KEY` |
-| **claude-xq-wrapper** | `/poki/coding-workers-docs/claude-xq-wrapper.py` | N/A | 1.0.0 | Python wrapper gọi XQ API thay vì Anthropic trực tiếp |
+| **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI (gọi qua wrapper XQ, không dùng key Anthropic) |
+| **claude-xq-wrapper** | `/poki/coding-workers-docs/claude-xq-wrapper.py` | N/A | 1.0.1 | Python wrapper gọi XQ API (key từ env/file, limit ~80K tokens) |
 | **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
 
 ---
@@ -199,10 +199,12 @@ MSWEA_SILENT_STARTUP="1"
 
 ### E. Claude Code CLI (`claude`) — XQ API Worker
 - **Binary**: `/usr/local/bin/claude` (v2.1.295) — CLI gốc của Anthropic (không dùng trực tiếp).
-- **Wrapper**: `/poki/coding-workers-docs/claude-xq-wrapper.py` (v1.0.0) — Python script giả lập `-p` mode, gọi XQ API thay vì Anthropic.
+- **Wrapper**: `/poki/coding-workers-docs/claude-xq-wrapper.py` (v1.0.1) — Python script giả lập `-p` mode, gọi XQ API thay vì Anthropic.
 - **Skill**: `claude-code` (v2.2.1) — điều phối coding, PR review, refactor qua Hermes.
 - **Models qua XQ API**: `claude-haiku-5-5` (default), `claude-sonnet-4-6`, `claude-opus-4-6`.
-- **API Key**: Hardcoded trong wrapper (XQ key `sk-_4XS1w...`), endpoint `https://xqapi.com/v1/messages`.
+- **API Key**: Đọc từ env `XQ_API_KEY` hoặc file `~/.config/xqapi/key` (chmod 600). **KHÔNG hardcode key trong repo**.
+- **Endpoint**: `https://xqapi.com/v1/messages` (ghi đè bằng env `XQ_ENDPOINT`).
+- **Giới hạn context thực đo (2026-10)**: XQ API chỉ nhận tối đa **~80K input tokens**/request, KHÔNG đạt 1M như quảng cáo. Payload lớn hơn bị **truncate âm thầm** (không báo lỗi): 150K chars → 31K tokens, 271K chars → 75K tokens. ⇒ Task cần context >80K phải chuyển sang Muse Code (200K) hoặc DeepSeek V4.1 (1M qua mini-SWE).
 - **Chế độ hoạt động**: One-shot print mode only — nhận brief, gọi XQ API, trả JSON tương thích Claude Code format.
 - **Flags hỗ trợ**:
   ```bash

@@ -1,8 +1,8 @@
-# HƯỚNG DẪN VẬN HÀNH 5 DEDICATED WORKERS TRÊN MACOS & ĐIỀU PHỐI QUA HERMES
+# HƯỚNG DẪN VẬN HÀNH 6 DEDICATED WORKERS TRÊN MACOS & ĐIỀU PHỐI QUA HERMES
 
 > **Môi trường mục tiêu:** macOS Sequoia 15.2 (Apple Silicon ARM64).  
 > **Orchestrator trung tâm:** Hermes Agent (quản lý Context, Discord Gateway, Full MCP Figma & Unity).  
-> **Mục tiêu:** Cung cấp quy chuẩn thi công, bảng lệnh điều phối, ánh xạ nhiệm vụ và quy trình tự động hóa cho 5 Dedicated Coding Workers.
+> **Mục tiêu:** Cung cấp quy chuẩn thi công, bảng lệnh điều phối, ánh xạ nhiệm vụ và quy trình tự động hóa cho 6 Dedicated Coding Workers.
 
 ---
 
@@ -14,11 +14,12 @@
 | **2** | **mini-SWE-agent** | `~/.local/bin/mini` (v2.4.6) | `thtung-paid` (`deepseek-v4.1-flash`) | 9Router VPS (`router.cutes1tg.online`) | **Tính năng Backend** (.NET CleanArch, Colyseus TS, Go), bugfix nhanh, refactor repo vừa (<50 files). Tốc độ 28s/task. | Code Unity cần verify editor compiler; task cần TUI tương tác. |
 | **3** | **OpenCode CLI** | `/opt/homebrew/bin/opencode` (v1.18.31) | `thtung-glm` (`glm-5.3-flash`) | 9Router VPS (`router.cutes1tg.online`) | **Review PR chéo**, đọc hiểu repo rộng (200k context), rà soát dependencies, refactor đa file. | Task chạy bash độc lập không cần context rộng. |
 | **4** | **Codex CLI** | `~/.local/bin/codex` (v0.147.0) | `gpt-5.6-sol` / GPT models | OpenAI Native OAuth (`~/.codex/auth.json`) | **Thiết kế kiến trúc hệ thống**, viết core engine, review bảo mật và chất lượng code pre-commit. | Task cần tiết kiệm chi phí tối đa (dùng DeepSeek/GLM thay thế). |
-| **5** | **Antigravity CLI** | `~/.local/bin/agy` (v1.2.3) | `thtung-agy` (Gemini 3.8 / Opus 4.6) | Google Antigravity Native / 9Router | **Phân tích đa phương thức**, xử lý context khổng lồ (1M-2M tokens), second opinion từ hệ sinh thái Google. | Task terminal thao tác nhanh cần zero latency. |
+| **5** | **Claude Code (XQ)** | `/usr/local/bin/claude` (v2.1.295)<br>+ `claude-xq-wrapper.py` | XQ API: `claude-sonnet-4-6` / `opus-4-6` / `haiku-5-5` | XQ API (`xqapi.com/v1/messages`) | **Coding chất lượng cao**, PR review, refactor phức tạp, task suy luận sâu (Sonnet/Opus). Context thực tế ~80K tokens. | Task cần context >80K (bị truncate âm thầm) — chuyển sang Muse/DeepSeek. |
+| **6** | **Antigravity CLI** | `~/.local/bin/agy` (v1.2.3) | `thtung-agy` (Gemini 3.8 / Opus 4.6) | Google Antigravity Native / 9Router | **Phân tích đa phương thức**, xử lý context khổng lồ (1M-2M tokens), second opinion từ hệ sinh thái Google. | Task terminal thao tác nhanh cần zero latency. |
 
 ---
 
-## 2. BẢNG THÔNG SỐ CẤU HÌNH CỦA 5 WORKERS TRÊN MACOS
+## 2. BẢNG THÔNG SỐ CẤU HÌNH CỦA 6 WORKERS TRÊN MACOS
 
 | Worker | Tệp cấu hình trên Mac | Quyền file | Biến môi trường / Headers chính | Công cụ phụ trợ tích hợp |
 | :--- | :--- | :---: | :--- | :--- |
@@ -27,6 +28,7 @@
 | **OpenCode** | `~/.config/opencode/opencode.json`<br>`~/.local/share/opencode/auth.json` | `600` | Provider: `ninerouter` (`@ai-sdk/openai-compatible`)<br>BaseURL: `https://router.cutes1tg.online/v1`<br>Model: `thtung-glm` | Format JSON stream, Git PR inspector, session resume. |
 | **Codex CLI** | `~/.codex/config.toml`<br>`~/.codex/auth.json` | `600` | `wire_api = "responses"`<br>`supports_websockets = false`<br>`requires_openai_auth = true` | Git worktree parallel isolation, sandbox workspace-write. |
 | **Antigravity**| `~/.config/antigravity/`<br>`~/.gemini/antigravity-cli/` | `600` | Managed by Google OAuth (`agy`) | Multi-agent coordination, Google Search integration. |
+| **Claude Code (XQ)** | `~/.config/xqapi/key`<br>`claude-xq-wrapper.py` | `600` | `XQ_API_KEY=«redacted:sk-…»`<br>`XQ_ENDPOINT=https://xqapi.com/v1/messages` | One-shot `-p` wrapper, JSON output kiểu Claude Code, `run_claude_brief.sh`. |
 
 ---
 
@@ -177,7 +179,8 @@ Bình thường Hermes sẽ tự động phân tích tech stack để chọn wor
 | **2. mini-SWE**<br>*(Chuyên Backend DeepSeek)* | `dùng mini`, `dùng deepseek`, `qua mini-swe`, `bằng mini` | *"Dùng mini sửa bug tính exp quest trong CleanArch"*<br>*"Viết test API login bằng deepseek"* | Gọi `mini --exit-immediately -y -l 0.5 -m openai/thtung-paid` chạy bash loop giải quyết trong ~28s. |
 | **3. OpenCode**<br>*(Chuyên Review & GLM)* | `dùng opencode`, `dùng glm`, `qua opencode`, `bằng glm` | *"Dùng opencode review diff nhánh feature_pokiwar xem sót gì không"*<br>*"Refactor module payment bằng glm"* | Gọi `opencode run -m ninerouter/thtung-glm` đọc hiểu toàn bộ repo rộng để audit/refactor. |
 | **4. Codex CLI**<br>*(Chuyên Kiến trúc GPT)* | `dùng codex`, `qua codex`, `bằng codex` | *"Dùng codex thiết kế interface cho module Matchmaking"*<br>*"Codex review bảo mật file auth"* | Gọi `codex exec -s workspace-write` hoặc `codex review --base origin/main`. |
-| **5. Antigravity (AGY-Code)**<br>*(Chuyên Gemini & Đa năng)* | `dùng agy`, `dùng antigravity`, `qua agy`, `bằng agy`, `dùng agy-code` | *"Dùng agy phân tích log crash này xem"*<br>*"Dùng agy-code sửa bug này (reasoning high)"* | Gọi `agy-runner -p "<task>" --effort <low|medium|high>`. Tự động xoay 3 tài khoản (`acc1`, `acc2`, `acc3`) khi chạm hạn mức quota/429. |
+| **5. Claude Code (XQ)**<br>*(Chuyên Claude chất lượng cao)* | `dùng claude`, `qua claude`, `bằng claude`, `dùng claude code` | *"Dùng claude review module auth"*<br>*"Claude sửa bug này (sonnet)"* | Gọi `bash run_claude_brief.sh <brief.md> <haiku\|sonnet\|opus>` — wrapper gọi XQ API. Cảnh báo: context thực ~80K tokens. |
+| **6. Antigravity (AGY-Code)**<br>*(Chuyên Gemini & Đa năng)* | `dùng agy`, `dùng antigravity`, `qua agy`, `bằng agy`, `dùng agy-code` | *"Dùng agy phân tích log crash này xem"*<br>*"Dùng agy-code sửa bug này (reasoning high)"* | Gọi `agy-runner -p "<task>" --effort <low\|medium\|high>`. Tự động xoay 3 tài khoản (`acc1`, `acc2`, `acc3`) khi chạm hạn mức quota/429. |
 
 > **Quy tắc phối hợp:**
 > - **Chat tự nhiên (không chỉ định worker)**: Hermes tự động nhận diện: nếu file `.cs`/Unity ➔ tự gọi **Muse Code**; nếu Backend (.NET/TS/Go/Python) ➔ tự gọi **mini-SWE (DeepSeek)**.
@@ -195,3 +198,5 @@ Bình thường Hermes sẽ tự động phân tích tech stack để chọn wor
 | **Unity MCP Mini không nhận lệnh** | Unity Editor chưa bật hoặc kẹt WebSocket | Mở Unity Editor dự án `pokiguard_client`. Kiểm tra port 6605/6606 không bị chiếm dụng. |
 | **Codex CLI bị treo lúc khởi động (7s)** | Thử kết nối WebSocket thất bại | Đảm bảo trong `~/.codex/config.toml` đã đặt `supports_websockets = false`. |
 | **`agy` báo eligibility check failed** | Chưa đăng nhập Google OAuth | Mở terminal gõ `agy` và hoàn tất đăng nhập trên trình duyệt. |
+| **`claude-xq-wrapper` báo `error_config`** | Thiếu XQ API key | Đặt env `XQ_API_KEY` hoặc ghi key vào `~/.config/xqapi/key` (`chmod 600`). |
+| **Claude trả lời nhưng thiếu nội dung / quên đầu prompt** | Payload vượt ~80K tokens → XQ truncate âm thầm | Giảm brief/context xuống dưới 80K tokens, hoặc chuyển task sang Muse Code / mini-SWE. |

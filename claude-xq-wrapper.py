@@ -5,12 +5,23 @@ Giả lập Claude CLI -p mode, gọi XQ API trực tiếp
 """
 import sys
 import json
+import os
 import argparse
 import subprocess
 from pathlib import Path
 
-XQ_API_KEY = "sk-_4XS1wddWY7uzWx6v93WHj9FM-apXbj87VE0zXKzo9U"
-XQ_ENDPOINT = "https://xqapi.com/v1/messages"
+XQ_API_KEY = os.environ.get("XQ_API_KEY") or os.environ.get("XQAPI_KEY")
+if not XQ_API_KEY:
+    _keyfile = Path.home() / ".config" / "xqapi" / "key"
+    if _keyfile.is_file():
+        XQ_API_KEY = _keyfile.read_text().strip()
+if not XQ_API_KEY:
+    print(json.dumps({
+        "type": "result", "subtype": "error_config", "is_error": True,
+        "result": "Thiếu XQ API key. Đặt env XQ_API_KEY hoặc ghi key vào ~/.config/xqapi/key (chmod 600)."
+    }))
+    sys.exit(1)
+XQ_ENDPOINT = os.environ.get("XQ_ENDPOINT", "https://xqapi.com/v1/messages")
 
 
 def main():
