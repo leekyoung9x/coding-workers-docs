@@ -251,3 +251,4 @@ MSWEA_SILENT_STARTUP="1"
   - **Single-File Bugfix**: mini-SWE hoàn thành trong **34s** (6 bước) vs Hermes mất **85s** (mini-SWE nhanh hơn 2.5 lần).
   - **Multi-File Feature**: mini-SWE hoàn thành trong **28s** (5 bước, 100% test pass) vs Hermes bị **TIMEOUT >180s** do phình context (>318k token/turn).
   - **DeepSWE v1.1**: Pass 40% (2/5 bài khó tuyệt đối), P2P 80% (không gây regression), 92.3% cache-hit rate.
+- ✅ **[Quy chuẩn QA tự động Pokiwar (QA_AUTO_TEST_STANDARD.md)](./QA_AUTO_TEST_STANDARD.md)**: Stack Playwright + CDP WebGL, 5 quy tắc cốt lõi (đo số thật, RED-GREEN, bảo vệ prod), suite 8 nhóm, checklist thi công, quy tắc seed M94, luật no-fake-green. Chỉ tài liệu — bộ test nằm ở `/poki`.
