@@ -6,6 +6,20 @@ Nguồn thực thi: `/poki/docs/QUY-CHUAN-TEST-POKIWORLD.md` (quy chuẩn),
 
 Repo này chỉ giữ TÀI LIỆU (không mang bộ test vào).
 
+## 0. Chia vùng 4 project (đừng lẫn)
+
+| Project | Vị trí | Số lượng | Chạy gì |
+|---|---|---|---|
+| Web Next.js | `pokiwar-web-test/e2e/*.spec.ts` | 141 spec | Trang web + API Server Action (túi đồ, event, shop) |
+| Client Vite | `pokiwar-client/e2e/*.spec.ts` | 16 spec | UI client battle, home, login, chat |
+| Game server | `colyseus-server/tests/**/*.test.ts` | 25 file Jest | Logic phòng, sách skill, luật game |
+| WebGL QA | `tools/webgl-qa/specs/*.py` | 5 spec Python | Client Unity qua CDP: smoke, match, evo, skills, petdetail |
+
+Test quét pixel NẰM Ở WebGL QA (`specs/pet_detail.py` + `src/frame_capture.py`):
+đo pixel vùng ROI trước/sau click để chứng minh nút bấm phản ứng thật
+(ngưỡng đổi > 0.3%), kèm check pixel variance chống ảnh đen/rỗng.
+Không thuộc 141 spec web.
+
 ## 1. Stack kiểm thử
 
 - Web Next.js 15: Playwright `@playwright/test`, workers 1 chống xung đột DB,
