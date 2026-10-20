@@ -6,13 +6,17 @@ Các **Dedicated Worker CLI** sở hữu coding loop độc lập (quản lý re
 
 ---
 
-## 1. Kiến trúc Tổng thể (6 Workers)
+## 1. Kiến trúc Tổng thể (7 Workers)
 
 ```text
                         ┌──────────────→ Muse Code CLI (muse)
-                        │                  ↓ (Responses API qua muse-shim :8787)
-                        │                OpenRouter / 9Router: thtung-muse → Meta Muse Spark 1.3
+                        │                  ↓ (Responses API qua muse-shim :8787 / Meta OAuth)
+                        │                thtung-muse → Meta Muse Spark 1.3-contributor
                         │                (Tích hợp Unity MCP Mini: 13 tools cốt lõi)
+                        │
+                        ├──────────────→ DeepSeek Harness CLI (dsh)
+                        │                  ↓ (Anthropic Messages API streaming)
+                        │                9Router: thtung-paid → DeepSeek V4.1 Flash
                         │
                         ├──────────────→ mini-SWE-agent (mini)
                         │                  ↓ (OpenAI-compatible)
@@ -55,6 +59,23 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 
 ---
 
+## 1.1. Ma Trận Thế Mạnh & Tiêu Chí Lựa Chọn Từng Worker (Strength & Routing Matrix)
+
+Mỗi worker được tối ưu hóa cho các nhóm tác vụ và ngữ cảnh chuyên biệt:
+
+| Worker | Model / Combo | Thế mạnh vượt trội (Mạnh về cái gì) | Điểm yếu / Lưu ý | Khi nào Lead nên chọn |
+|---|---|---|---|---|
+| **Muse Code** (`muse`) | `muse-spark-1.3-contributor` (Meta OAuth) | **Hệ thống lớn, C# / Unity, backend Clean Architecture**. Suy luận sâu (`reasoning-effort medium/xhigh`), giải bài toán long-horizon phức tạp, tích hợp Unity MCP. | Phụ thuộc hạn mức tài khoản Meta, CLI nghiêm ngặt, chi phí token cao. | Task kiến trúc game lớn, C# Clean Architecture, refactor engine Unity hoặc thuật toán khó. |
+| **DeepSeek Harness** (`dsh`) | DeepSeek V4.1 Flash (`thtung-paid`) | **Khả năng tự gỡ lỗi (Self-healing) & Kỷ luật test cực cao**. Tự viết script `.dbg.mjs` chẩn đoán lỗi sâu trong core/DOM/audio; test suite Vitest mock sạch chạy siêu tốc (1.02s / 146 tests); UI Master-Detail và vector silhouette hoàn thiện không lỗi layout; đóng gói CI/CD 1 lệnh (`npm run verify`). | Tốn nhiều bước suy luận (thích lặp lại kiểm tra, 826 steps / 5 phase), bundle JS lớn hơn (~500 kB), cần stopping bounds rõ ràng trong brief. | Xây dựng engine lõi, logic phức tạp, UI thương mại không tì vết, cần test suite đồ sộ chạy CI siêu tốc. |
+| **mini-SWE-agent** (`mini`) | DeepSeek V4.1 Flash (`thtung-paid`) | **Tốc độ thực thi chớp nhoáng & Siêu tiết kiệm token/bước**. Hoàn thành task ít hơn 30–40% số bước (564 steps / 5 phase); bundle production cực kỳ gọn nhẹ (~434 kB); mỹ thuật chữ Hán thư pháp sáng tạo; văn phong bản địa hóa tu chân kèm chú thích công thái học (`(Restart)`, `(Về Menu)`). | Tự chủ môi trường yếu hơn (dễ lạc workspace sang `/tmp` nếu không khóa `cd "$WS"`), chạy test Vitest chậm (19s do mock/warnings), dễ sót lỗi layout CSS nhỏ. | Triển khai tính năng nhanh, bugfix gọn, task song song số lượng lớn (bulk/parallel), tối ưu bundle nhẹ cho web/mobile. |
+| **Claude Code** (`claude`) | Claude Sonnet 4.6 / Opus 4.6 (XQ API) | **Phân tích codebase đa file sắc bén, viết tài liệu kỹ thuật & refactor sạch**. Hiểu cấu trúc repo nhanh, viết code mẫu mực theo chuẩn TypeScript / Python hiện đại. | Bị giới hạn context thực đo ~80K tokens qua XQ API (truncate âm thầm nếu vượt quá); chỉ hỗ trợ chế độ one-shot qua wrapper. | Review PR, refactor module, viết tài liệu kiến trúc, task coding trung bình cần code style cao cấp. |
+| **OpenAI Codex** (`codex`) | GPT-5.6 Luna (`thtung-gpt`) | **Tuân thủ spec nghiêm ngặt, rà soát edge-case & bảo mật**. Sinh testcase biên chính xác, phát hiện lỗ hổng logic/dữ liệu theo phong cách chuẩn OpenAI. | Khởi động cần tắt websocket (`supports_websockets = false`), ít linh hoạt trong môi trường shell tự do. | Viết test edge-case, kiểm tra bảo mật, audit API và refactor logic theo đặc tả chặt chẽ. |
+| **OpenCode** (`opencode`) | GLM-5.3-Flash (`thtung-glm`) | **Đa dạng provider (`@ai-sdk`), tốc độ xử lý nhanh, giá rẻ**. Phù hợp xử lý tài liệu, dịch thuật kỹ thuật, logic thông thường. | Khả năng tự sửa lỗi sâu trong hệ thống game/engine phức tạp ở mức trung bình. | Task coding phụ trợ, viết script tooling, migration dữ liệu hoặc khi các router chính nghẽn. |
+| **Antigravity** (`agy`) | Gemini 3.8 Flash (`thtung-agy`) | **Context siêu lớn, đa phương thức (multimodal), auto-rotation chống 429**. Tự động xoay tua 3 tài khoản Google OAuth khi cạn quota; đọc hiểu context toàn repo. | Chỉ có trên môi trường hỗ trợ `agy`, CLI đặc thù Google OAuth. | Rà soát repository cực lớn, đọc hiểu codebase đồ sộ hoặc khi cần xử lý đa phương thức (ảnh/video). |
+
+
+---
+
 ## 2. Danh mục Components & Workers
 
 | Thành phần | Binary Linux VPS | Binary macOS (Apple Silicon) | Phiên bản | Mô tả & Cách đấu nối |
@@ -67,6 +88,7 @@ Workers đảm nhiệm (100% THI CÔNG & TEST OWNERSHIP):
 | **Muse Code CLI** | `/root/.local/bin/muse` | `~/.local/bin/muse` | 1.4.2 | CLI native của Meta (kèm `unity-mini.js` 13 tools) |
 | **muse-shim** | `/root/ops/muse-shim/` | `~/.local/share/muse-shim/`<br>`~/.local/bin/muse-shim` | 0.4.0 | Shim proxy loopback `:8787` ➔ Responses API |
 | **mini-SWE-agent** | `/root/.local/bin/mini` | `~/.local/bin/mini` | 2.4.6 | Agent ~100 dòng Python, bash-only (DeepSeek via 9Router) |
+| **DeepSeek Harness** (`dsh`) | `/usr/local/bin/dsh` | `dsh` (npm `@deepseek-ai/dsh`) | 0.2.1-rc.2 | Agent của DeepSeek, chạy headless qua Anthropic streaming SSE (`thtung-paid`) |
 | **OpenCode CLI** | `/usr/local/bin/opencode` | `/opt/homebrew/bin/opencode` | 1.18.31 | Agent mã nguồn mở, hỗ trợ đa provider qua `@ai-sdk` (GLM via 9Router) |
 | **Codex CLI** | `/usr/local/bin/codex` | `~/.local/bin/codex` | 0.147.0 | OpenAI Codex CLI, cấu hình `~/.codex/config.toml` |
 | **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI (gọi qua wrapper XQ, không dùng key Anthropic) |
@@ -83,7 +105,7 @@ Tất cả các worker (trừ Muse Code dùng upstream OpenRouter) đều trỏ 
 
 | Tên Combo | Model List trong Combo | Trạng thái thực tế |
 |---|---|---|
-| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (mini-SWE) |
+| `thtung-paid` | `xq/deepseek-v4.1-flash`, `aibox/ds/deepseek-flash` | Trả lời nhanh (~1.5s), phục vụ DeepSeek (`mini-SWE` & `dsh`) |
 | `thtung-glm` | `xq/glm-5.3-flash` | Phục vụ GLM-5.3-Flash qua OpenCode (~2s) |
 | `thtung-muse` | `oc/muse-spark-1.3-contributor-free` (+1.2 fallback) | Chạy chuẩn qua Responses API (muse-shim) & stream |
 | `thtung-agy` | `ag/gemini-3.8-flash-high`, `ag/gemini-3.8-flash-medium`, `ag/gemini-3.8-flash-low` | Active qua 3 account Google OAuth (`leekyoung55124`, `sanggia5512`, `huytung551237`), tự xoay tua khi hết quota |
@@ -118,6 +140,12 @@ codex exec -s workspace-write "<yêu cầu task>"
 
 # 5. Antigravity CLI (Google Antigravity agy)
 agy -p "<yêu cầu task>" --dangerously-skip-permissions
+
+# 6. DeepSeek Harness CLI (dsh)
+DEEPSEEK_BASE_URL="https://router.cutes1tg.online/v1" \
+DEEPSEEK_API_KEY="$HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY" \
+DSH_PERMISSION_MODE="danger-full-access" \
+dsh --profile headless "<yêu cầu task>"
 ```
 
 ### 4.2. Trên Linux VPS
@@ -139,6 +167,15 @@ codex exec -s workspace-write "<yêu cầu task>"
 
 # 5. Antigravity CLI
 agy -p "<yêu cầu task>" --dangerously-skip-permissions
+
+# 6. DeepSeek Harness CLI (dsh)
+DEEPSEEK_BASE_URL="http://127.0.0.1:20127/v1" \
+DEEPSEEK_API_KEY="$HERMES_CUSTOM_ROUTER_CUTES1TG_ONLINE_API_KEY" \
+DSH_PERMISSION_MODE="danger-full-access" \
+dsh --profile headless "<yêu cầu task>"
+
+# Hoặc qua runner script:
+bash /poki/scripts/run_dsh_worker.sh <workspace_dir> <brief.md>
 ```
 
 ---
@@ -239,12 +276,30 @@ MSWEA_SILENT_STARTUP="1"
   agy-runner -p "<yêu cầu task + tiêu chí nghiệm thu>" --effort <low|medium|high>
   ```
 
+### G. DeepSeek Harness CLI (`dsh`) & `~/.dsh/profiles/headless/cordis.patch.yml`
+- **Binary**: `/usr/local/bin/dsh` (npm package `@deepseek-ai/dsh` v0.2.1-rc.2).
+- **Mô hình**: DeepSeek V4.1 Flash (`thtung-paid`) qua 9Router (`/v1/messages` Anthropic streaming SSE).
+- **Cấu hình Profile Headless (`~/.dsh/profiles/headless/cordis.patch.yml`)**:
+  ```yaml
+  llm:
+    provider: deepseek-official
+  deepseek:
+    model: thtung-paid
+    messagesApiRoot: /v1
+  ```
+- **Quy tắc vận hành sống còn**:
+  - `dsh` **CẤM** đặt `DEEPSEEK_BASE_URL` trong file `.env` (gây lỗi `sets DEEPSEEK_BASE_URL, which only the launching environment may set`). Bắt buộc export trực tiếp từ môi trường shell hoặc wrapper launcher script.
+  - Phải có `DSH_PERMISSION_MODE="danger-full-access"` khi chạy tự động / headless để bỏ qua các câu hỏi xin quyền ghi file và chạy lệnh shell.
+  - Phải đặt stopping bounds rõ ràng trong brief: "Khi tất cả test gates của phase đã pass, lập tức kết luận nộp bài, không tự ý tối ưu hóa vi mô hoặc bot simulation ngoài brief" để tránh tình trạng agent kiểm tra lặp đi lặp lại quá nhiều steps.
+  - Runner script chuẩn: `/poki/scripts/run_dsh_worker.sh <workspace> <brief.md>`.
+
 ---
 
 ## 6. Tài liệu Chuyên sâu & Benchmark
 
-- 🎞️ **[Cơ chế Frame-to-Frame (clips.json) — Burn pipeline HTML/Spine → sprite frame (frame-to-frame-clips/)](./frame-to-frame-clips/README.md)**: Nguyên lý hoạt hình tua frame, case-study port `stickman-game.html` (rig/pose/keyframe → bake PNG + manifest), định dạng `clips.json`, cách game load (Units.js → preload → UnitRenderer), workflow thêm tướng mới và checklist nghiệm thu. Game chạy100% frame-to-frame (41 tướng); Spine chỉ dùng ở tool preview.
-- 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều và Watchdog chống treo/chết.
+- 🎮 **[Benchmark Đối đầu Toàn diện: dsh vs mini-swe-agent — Vạn Kiếp Tu Tiên P1–P5 (BENCHMARK.md)](./BENCHMARK.md)**: Đối đầu 5 giai đoạn, 18 gates kỹ thuật (T01–T18). So sánh chi tiết về số bước (826 vs 564), tốc độ Vitest (1.02s vs 19.30s), kích thước bundle (500 kB vs 434 kB), RAM heap, khả năng tự sửa lỗi và tiêu chí định tuyến.
+- 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều, Watchdog chống treo/chết, và Ma trận lựa chọn worker (Mục 7).
+
 - 📘 **[Hướng dẫn Chi tiết Vận hành 6 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.
 - 📊 **[Tài liệu Phương pháp & Công thức Benchmark (BENCHMARK.md)](./BENCHMARK.md)**: Hướng dẫn đo lường theo chuẩn DeepSWE (Pier runner) và Terminal-Bench (Harbor runner).
 - 📈 **[Báo cáo Thực nghiệm Đối đầu: mini-SWE vs Hermes Direct & DeepSWE v1.1 (VERIFICATION_REPORT.md)](./VERIFICATION_REPORT.md)**:
