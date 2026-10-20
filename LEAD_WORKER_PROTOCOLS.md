@@ -153,18 +153,104 @@ hermes cron create --model thtung-muse --provider custom:THTUNG \
 
 ## 7. Tiêu Chí Lựa Chọn Worker & So Sánh Thực Tế (Worker Routing Matrix)
 
-Dựa trên kết quả benchmark đối đầu thực tế qua 5 giai đoạn (P1–P5) xây dựng engine và hoàn thiện game:
+Dựa trên kết quả thực tế qua 5 giai đoạn (P1–P5) xây dựng engine game 2D top-down ("Vạn Kiếp Tu Tiên") và các bài toán coding thực chiến trên hệ thống:
 
-| Tiêu chí so sánh | Worker A: `@deepseek-ai/dsh` | Worker B: `mini-swe-agent` |
-|---|---|---|
-| **Số bước thực thi (Steps)** | 826 steps (kỹ tính, kiểm tra lặp lại nhiều lần) | **564 steps (tiết kiệm hơn ~32% chi phí)** |
-| **Tốc độ Unit test (Vitest)** | **1.02s / 146 tests (mock sạch, chạy siêu tốc)** | 19.30s / 102 tests (chậm hơn x18.9 lần) |
-| **Kích thước Bundle JS** | 500 kB (chạm ngưỡng warning của Vite) | **434 kB (nhẹ hơn ~13%)** |
-| **Đỉnh RAM Browser (Heap Peak)** | 95.70 MB | **88.40 MB (tiết kiệm bộ nhớ hơn)** |
-| **Khả năng tự sửa lỗi (Self-healing)** | **Rất cao: tự viết script `.dbg.mjs`, vá tận gốc core engine & API** | Trung bình: cần Lead can thiệp runner script khóa workspace |
-| **Độ hoàn thiện UI/UX** | **Không lỗi layout, Bestiary Master-Detail, stats đầy đủ** | Sáng tạo thư pháp chữ Hán, nhưng sót lỗi tràn thanh cuộn |
+### 7.1. Bảng Tổng Hợp So Sánh Định Lượng Thực Tế (5 Workers)
 
-### Quy tắc điều phối của Lead:
-* **Chọn Worker A (`dsh`):** Khi cần xây dựng logic phức tạp, hệ thống engine lõi đòi hỏi test suite đồ sộ, chạy CI/CD tốc độ cao và cần UI hoàn chỉnh thương mại.
-* **Chọn Worker B (`mini-swe-agent`):** Khi cần triển khai tính năng nhanh gọn, tiết kiệm chi phí gọi mô hình LLM, và tối ưu dung lượng cho web/mobile nhẹ nhàng.
+| Hạng mục Đo đạc | Worker A: `dsh` (DeepSeek V4.1) | Worker B: `mini` (DeepSeek V4.1) | Worker C: `opencode` (GLM 5.3) | Worker D: `agy` (Gemini 3.8) | Worker E: `muse` (Muse Contributor) |
+|---|---|---|---|---|---|
+| **Độ phủ Unit tests (Vitest)** | **146 tests** (1.02s) | 102 tests (19.30s) | 142 tests (3.26s) | 51 tests (1.19s) | **107 tests (2.74s)** |
+| **Độ phủ E2E (Playwright)** | 19 tests (58.3s) | 18 tests (34.2s) | **23 tests (45.5s)** | 3 suites (21.4s) | 9 tests (28.3s) |
+| **Tỷ lệ đạt 18 Gates** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** |
+| **Kích thước Bundle JS** | 500.0 kB | 434.0 kB | **344.6 kB (nhỏ nhất)** | 463.6 kB | **366.3 kB (nhỏ thứ hai)** |
+| **Mô phỏng 500 quái (T12)** | 0.063 ms/step | 0.065 ms/step | **0.0139 ms/step (nhanh nhất)** | 0.1345 ms/step | 0.0530 ms/step (p99 0.311) |
+| **Đỉnh RAM JS Heap** | 95.70 MB | 88.40 MB | **9.54 MB** | **9.54 MB** | 42.63 MB |
+| **FPS Headless Chromium** | 18.0 FPS | 7.5 FPS | 23.4 FPS | 20.0 FPS | **59.9 FPS (mượt nhất)** |
+
+---
+
+### 7.2. Chi Tiết Từng Worker: Mạnh Về Cái Gì & Khi Nào Nên Chọn Code
+
+#### 1. Worker A: `@deepseek-ai/dsh` (DeepSeek V4.1 Flash via 9Router)
+* **Mạnh về cái gì:**
+  - **Khả năng tự chủ và tự sửa lỗi (Self-healing) đỉnh cao:** Khi gặp lỗi khó (i-frame kẹt test, popup đè lớp), `dsh` tự viết file chẩn đoán `.dbg.mjs`, lần ra tận gốc nguyên nhân trong core game và tự bổ sung API gỡ lỗi mà không cần Lead can thiệp.
+  - **Kỷ luật test mock sạch sẽ & tốc độ cao:** Viết tới 146 unit test mà chạy chỉ trong **1.02 giây**.
+  - **UI/UX chuẩn mực thương mại:** Giao diện Master-Detail, vector silhouette vẽ tay chuẩn xác, không bao giờ lỗi tràn hay lệch layout.
+  - **Quy trình nghiệm thu 1 lệnh:** Tự động hóa pipeline kiểm thử và xuất báo cáo (`npm run verify`).
+* **Khi nào Lead nên chọn code:**
+  - **Xây dựng module lõi (Core Engine / State Machine / Battle Logic phức tạp).**
+  - **Dự án đòi hỏi bộ test coverage khắt khe** (Unit tests mock sạch + E2E Playwright) chạy CI/CD tốc độ cao.
+  - **Khi cần UI hoàn thiện thương mại**, bố cục chuẩn mực không có lỗi vặt.
+
+#### 2. Worker B: `mini-swe-agent` (DeepSeek V4.1 Flash via 9Router)
+* **Mạnh về cái gì:**
+  - **Tiết kiệm số bước (steps) và chi phí token số một:** Hoàn thành toàn bộ bài toán với chỉ 564 steps (tiết kiệm hơn Worker A gần 32%).
+  - **Tốc độ thực thi chớp nhoáng:** Các task bugfix đơn file hoàn thành chỉ trong 20–34 giây.
+  - **Sáng tạo văn phong & mỹ thuật bản địa hóa:** Hệ thống 12 icon chữ Hán thư pháp (劍, 萬, 雷...) đổi màu theo nguyên tố; câu từ tu chân bản địa hóa kèm chú thích công thái học `(Restart)`, `(Về Menu)`.
+* **Khi nào Lead nên chọn code:**
+  - **Bugfix nhanh (Single-file bugfix, sửa regression):** Giải quyết lỗi trong vài chục giây mà không tiêu tốn tài nguyên.
+  - **Tác vụ bulk / chạy song song số lượng lớn:** Khi cần chạy nhiều worker đồng thời để xử lý hàng loạt task nhỏ nhằm tiết kiệm chi phí token.
+  - **Tác vụ vận hành DevOps, deploy container, bảo trì script VPS.**
+
+#### 3. Worker C: `opencode` (GLM-5.3-Flash qua 9Router)
+* **Mạnh về cái gì:**
+  - **Vô địch về tối ưu hóa Bundle JS & Bộ nhớ:** Bundle JS sinh ra chỉ **344.6 kB** (gọn nhất trong tất cả các worker, nhỏ hơn Worker A tới 31%).
+  - **Thuật toán mô phỏng lõi đạt hiệu năng cực hạn:** Tốc độ step đạt **0.0139 ms/step** (nhanh gấp 4.5 lần Worker A) nhờ cơ chế zero-allocation in-place compaction (`compactInPlace`).
+  - **Bộ test E2E Playwright sâu và phong phú nhất:** Viết 23 kịch bản E2E bao quát sâu, tự nhận diện và giải quyết triệt để lỗi bất đồng bộ của engine.
+  - Chi phí token GLM rẻ nhất qua 9Router.
+* **Khi nào Lead nên chọn code:**
+  - **Ứng dụng frontend / Web Game nhạy cảm về kích thước bundle** (Bundle size budget < 350 kB).
+  - **Xử lý thuật toán toán học, mô phỏng số lượng lớn thực thể** (High Performance / Zero Garbage Collection).
+  - **Khi cần bao phủ kịch bản kiểm thử E2E Playwright chuyên sâu.**
+
+#### 4. Worker D: `agy` (Google Antigravity CLI — Gemini 3.8 Flash)
+* **Mạnh về cái gì:**
+  - **Thẩm mỹ UI/UX hiện đại và đồ họa chiến đấu bóng bẩy nhất:** Thiết kế translucent glass container, bo góc hiện đại đẳng cấp commercial indie; vòng radar/trận pháp Bát Quái phân tầng hiển thị tầm đánh tự động; đạn đạo neon phát sáng rõ nét.
+  - **Context cửa sổ siêu lớn (1M+ tokens):** Đọc hiểu trọn vẹn toàn bộ codebase đồ sộ trong một lượt.
+  - **Hệ thống an toàn đa tầng & tự động xoay tài khoản:** Tự động xoay tua 3 tài khoản Google OAuth (`acc1`, `acc2`, `acc3`) chống lỗi 429 / Quota Exceeded.
+* **Khi nào Lead nên chọn code:**
+  - **Giao diện người dùng hiện đại, bóng bẩy (Commercial Indie Game, Landing Page, Dashboard cao cấp).**
+  - **Refactor hoặc rà soát codebase cực lớn** cần nhồi toàn bộ repository vào context cùng lúc.
+  - **Tác vụ kết hợp đa phương thức (Multimodal):** Đọc hiểu mockup hình ảnh, video gameplay, screenshot đối chiếu.
+
+#### 5. Worker E: `muse` (Meta Muse Code — `muse-spark-1.3-contributor`)
+* **Mạnh về cái gì:**
+  - **Bố cục công thái học (HUD UX) khoa học nhất:** Dải thanh trạng thái ngang tinh tế ở đỉnh màn hình, Action Bar 6 ô chiêu thức trực quan ở đáy kèm thời gian hồi chiêu; tạo hình nhân vật mang bản sắc văn hóa Việt Nam (nón lá truyền thống, áo đạo bào xanh ngọc).
+  - **Khả năng tự phát hiện lỗi logic sâu trong vòng lặp game (Deep Loop Logic Debugging):** Tự bắt lỗi ticker game ghi đè BGM mỗi frame khi vào Endless Mode và tự fix trước khi nộp bài.
+  - **Tốc độ khung hình (FPS) mượt nhất toàn đoàn:** Đạt **59.9 FPS** trong môi trường headless Chromium, thời gian step 0.053 ms.
+* **Khi nào Lead nên chọn code:**
+  - **Xây dựng game hoặc ứng dụng cần vòng lặp xử lý frame tốc độ cao, mượt mà (60 FPS).**
+  - **Thiết kế giao diện đòi hỏi tư duy công thái học cao cho người dùng/người chơi** (HUD, Action Bar, Hotkeys).
+  - **Giải quyết các lỗi tương tác logic phức tạp** giữa các hệ thống (âm thanh, trạng thái, vòng lặp game loop).
+
+#### 6. Worker F: `codex` (OpenAI Codex CLI — GPT-5.6-Luna qua `thtung-gpt`)
+* **Mạnh về cái gì:**
+  - **Tư duy kiến trúc hệ thống chuẩn mực:** Tuân thủ triệt để design pattern, clean architecture, SOLID.
+  - **Typing TypeScript strict & API contract:** Không bao giờ lạm dụng `any`, định nghĩa interface và contract chặt chẽ.
+* **Khi nào Lead nên chọn code:**
+  - **Thiết kế khung kiến trúc ban đầu (Scaffolding / Architecture setup).**
+  - **Viết Backend API, xử lý migration cơ sở dữ liệu hoặc thiết kế domain models.**
+
+#### 7. Worker G: `claude` (Claude Code CLI — Anthropic Claude 3.7 / Sonnet 4.6)
+* **Mạnh về cái gì:**
+  - **Suy luận ngữ cảnh sâu và giải quyết thuật toán hóc búa:** Đọc hiểu code phức tạp, tìm các edge cases tiềm ẩn.
+  - **Code review & Security audit:** Soát lỗi bảo mật, rà soát lỗ hổng logic trước khi release.
+* **Khi nào Lead nên chọn code:**
+  - **Code review trước khi commit/merge lên branch chính.**
+  - **Điều tra các lỗi logic khó hiểu hoặc tái cấu trúc các thuật toán toán học phức tạp.**
+
+---
+
+### 7.3. Bảng Ma Trận Quyết Định Nhanh Cho Lead (Quick Decision Matrix)
+
+| Loại Tác Vụ Cần Làm | Worker Ưu Tiên 1 (Khuyên dùng) | Worker Ưu Tiên 2 (Dự phòng) | Lý do chính |
+|---|---|---|---|
+| **Core Engine / Logic Game Phức Tạp** | **`dsh`** (DeepSeek V4.1) | **`muse`** (Muse Contributor) | `dsh` self-healing tự chẩn đoán sâu; `muse` logic vòng lặp chuẩn |
+| **Bugfix Nhanh / DevOps / Script Nhỏ** | **`mini`** (mini-swe-agent) | **`opencode`** (GLM 5.3) | `mini` chớp nhoáng (20s-30s), tiết kiệm 32% token |
+| **Tối Ưu Bundle / Hiệu Năng / Zero-GC** | **`opencode`** (GLM 5.3) | **`muse`** (Muse Contributor) | `opencode` bundle siêu nhẹ (344 kB), step 0.0139 ms |
+| **Đồ Họa Bóng Bẩy / UI Hiện Đại / Multimodal**| **`agy`** (Gemini 3.8) | **`muse`** (Muse Contributor) | `agy` visual glass/neon đỉnh cao; `muse` HUD công thái học |
+| **Game Cần 60 FPS Mượt / HUD Khoa Học** | **`muse`** (Muse Contributor) | **`opencode`** (GLM 5.3) | `muse` đạt 59.9 FPS headless, Action Bar trực quan |
+| **Kiến Trúc Backend / Scaffolding / API** | **`codex`** (GPT-5.6 Luna) | **`dsh`** (DeepSeek V4.1) | `codex` kiến trúc clean, typing strict |
+| **Code Review / Security / Thuật Toán Khó** | **`claude`** (Claude 3.7/Sonnet) | **`dsh`** (DeepSeek V4.1) | `claude` suy luận sâu, soát lỗi tinh tế |
+
 
