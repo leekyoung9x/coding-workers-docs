@@ -148,3 +148,23 @@ hermes cron create --model thtung-muse --provider custom:THTUNG \
   - Kiểm tra cả 2 lần test: Cổng 1 (Local) đã xanh chưa, Cổng 2 (Live deploy) đã xanh chưa.
   - Đo lại số thật trên artifact đã deploy/build bằng đúng tài khoản và URL chuẩn.
 - Báo cáo kết quả về Discord: Báo cáo ngắn gọn, tập trung vào số đo thực tế, nêu rõ cái gì ĐÃ XONG và cái gì CHƯA XONG. Tuyệt đối không kể lể lại hành trình.
+
+---
+
+## 7. Tiêu Chí Lựa Chọn Worker & So Sánh Thực Tế (Worker Routing Matrix)
+
+Dựa trên kết quả benchmark đối đầu thực tế qua 5 giai đoạn (P1–P5) xây dựng engine và hoàn thiện game:
+
+| Tiêu chí so sánh | Worker A: `@deepseek-ai/dsh` | Worker B: `mini-swe-agent` |
+|---|---|---|
+| **Số bước thực thi (Steps)** | 826 steps (kỹ tính, kiểm tra lặp lại nhiều lần) | **564 steps (tiết kiệm hơn ~32% chi phí)** |
+| **Tốc độ Unit test (Vitest)** | **1.02s / 146 tests (mock sạch, chạy siêu tốc)** | 19.30s / 102 tests (chậm hơn x18.9 lần) |
+| **Kích thước Bundle JS** | 500 kB (chạm ngưỡng warning của Vite) | **434 kB (nhẹ hơn ~13%)** |
+| **Đỉnh RAM Browser (Heap Peak)** | 95.70 MB | **88.40 MB (tiết kiệm bộ nhớ hơn)** |
+| **Khả năng tự sửa lỗi (Self-healing)** | **Rất cao: tự viết script `.dbg.mjs`, vá tận gốc core engine & API** | Trung bình: cần Lead can thiệp runner script khóa workspace |
+| **Độ hoàn thiện UI/UX** | **Không lỗi layout, Bestiary Master-Detail, stats đầy đủ** | Sáng tạo thư pháp chữ Hán, nhưng sót lỗi tràn thanh cuộn |
+
+### Quy tắc điều phối của Lead:
+* **Chọn Worker A (`dsh`):** Khi cần xây dựng logic phức tạp, hệ thống engine lõi đòi hỏi test suite đồ sộ, chạy CI/CD tốc độ cao và cần UI hoàn chỉnh thương mại.
+* **Chọn Worker B (`mini-swe-agent`):** Khi cần triển khai tính năng nhanh gọn, tiết kiệm chi phí gọi mô hình LLM, và tối ưu dung lượng cho web/mobile nhẹ nhàng.
+
