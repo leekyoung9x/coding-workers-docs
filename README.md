@@ -297,7 +297,7 @@ MSWEA_SILENT_STARTUP="1"
 
 ## 6. Tài liệu Chuyên sâu & Benchmark
 
-- 🎮 **[Benchmark Đối đầu Toàn diện: dsh vs mini-swe-agent — Vạn Kiếp Tu Tiên P1–P5 (BENCHMARK.md)](./BENCHMARK.md)**: Đối đầu 5 giai đoạn, 18 gates kỹ thuật (T01–T18). So sánh chi tiết về số bước (826 vs 564), tốc độ Vitest (1.02s vs 19.30s), kích thước bundle (500 kB vs 434 kB), RAM heap, khả năng tự sửa lỗi và tiêu chí định tuyến.
+- 🎮 **[Benchmark Đối đầu Toàn diện: 4 Workers — Vạn Kiếp Tu Tiên P1–P5 (BENCHMARK.md)](./BENCHMARK.md)**: Đối đầu 5 giai đoạn, 18 gates kỹ thuật (T01–T18) giữa cả 4 workers (`dsh`, `mini-swe-agent`, `opencode` GLM-5.3, `agy` Gemini 3.8). So sánh chi tiết về số bước, tốc độ Vitest (146 vs 102 vs 142 vs 51 tests), kích thước bundle (500k vs 434k vs 344k vs 463k), hiệu năng mô phỏng (0.0139 ms/step), RAM heap, FPS Chromium và ma trận định tuyến thực tế.
 - 📜 **[Quy chuẩn Phối hợp Lead–Worker & Tranh luận Kỹ thuật (LEAD_WORKER_PROTOCOLS.md)](./LEAD_WORKER_PROTOCOLS.md)**: Quy định tách biệt vai trò Lead (Hermes) vs 100% Thi công & Test Ownership (Worker), cơ chế phản biện 2 chiều, Watchdog chống treo/chết, và Ma trận lựa chọn worker (Mục 7).
 
 - 📘 **[Hướng dẫn Chi tiết Vận hành 6 Workers trên macOS & Điều phối qua Hermes (MACOS_WORKERS_GUIDE.md)](./MACOS_WORKERS_GUIDE.md)**: Ma trận phân công task, bảng lệnh headless chuẩn, feedback loop Unity MCP Mini và xử lý sự cố.

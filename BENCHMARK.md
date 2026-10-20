@@ -101,53 +101,49 @@ Top configs mới lên full 113.
 
 ---
 
-## Benchmark Đối đầu Thực tế: `@deepseek-ai/dsh` vs `mini-swe-agent` (Vạn Kiếp Tu Tiên P1–P5)
+## Benchmark Đối đầu Thực tế Toàn diện: 4 Workers (Vạn Kiếp Tu Tiên P1–P5)
 
 *Ngày thực hiện: 2026-10-20*  
 *Môi trường: Linux VPS Ubuntu (66.135.0.13), Node.js LTS 26.8.2, PixiJS v8.22.0, Vite 6, TypeScript strict, Vitest, Playwright*  
-*Model dùng chung: DeepSeek V4.1 Flash 1017 (combo `thtung-paid` qua 9Router 127.0.0.1:20127)*  
-*Nhiệm vụ: Phát triển trọn vẹn game roguelite 2D top-down "Vạn Kiếp Tu Tiên" từ starter repository sạch qua 5 giai đoạn (P1–P5) đạt chuẩn 18 gates kỹ thuật (T01–T18).*
+*Nhiệm vụ: Phát triển trọn vẹn game roguelite 2D top-down "Vạn Kiếp Tu Tiên" từ cùng starter repository sạch qua 5 giai đoạn (P1–P5) đạt chuẩn 18 gates kỹ thuật (T01–T18).*
 
-### 1. Bảng số liệu đo lường định lượng
+### 1. Bảng số liệu đo lường định lượng chung cuộc (4 Workers)
 
-| Hạng mục Đo đạc | Worker A: `@deepseek-ai/dsh` | Worker B: `mini-swe-agent` | Đánh giá & Ưu thế |
-|---|---|---|---|
-| **Tổng số bước (Steps P1 → P5)** | 826 steps (122 + 85 + 170 + 234 + 215) | **564 steps** (64 + 86 + 99 + 132 + 183) | **Worker B tiết kiệm bước hơn 31.7%** |
-| **Độ phủ Unit tests (Vitest)** | **146 tests / 17 files** (chạy trong **1.02s**) | 102 tests / 12 files (chạy trong 19.30s) | **Worker A vượt trội (chạy nhanh hơn x18.9 lần)** |
-| **Độ phủ E2E Tests (Playwright)** | **19 tests** (chạy trong 58.3s) | 18 tests (chạy trong 34.2s) | **Worker A sâu hơn / Worker B chạy nhanh hơn** |
-| **Tỷ lệ đạt chuẩn 18 Gates (T01–T18)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | Ngang nhau tuyệt đối |
-| **Lỗi Console (0 Console/Page errors)** | **0 errors** | **0 errors** | Hoàn hảo trên cả hai |
-| **Kích thước Bundle JS chính** | 500.0 kB (511.8 kB raw, 152.1 kB gzip) | **434.0 kB** (443.9 kB raw, 133.0 kB gzip) | **Worker B gọn hơn ~13%** |
-| **Tổng dung lượng Assets** | 788.22 KiB (10 files) | **~720 KiB** (10 files) | **Worker B tối ưu bundle hơn** |
-| **Tài nguyên âm thanh ngoài** | **0 byte / 0 request** (Web Audio API) | **0 byte / 0 request** (Web Audio API) | Chuẩn procedural tuyệt đối |
-| **Stress test 500 quái (Node sim 60s)** | **0.063 ms/step** (p99: 0.518 ms) | 0.065 ms/step (p99: 0.540 ms) | **Worker A nhỉnh hơn nhẹ** |
-| **Đỉnh bộ nhớ JS Heap (Browser Peak)** | 95.70 MB | **88.40 MB** | **Worker B tiết kiệm RAM hơn** |
-| **Đỉnh bộ nhớ JS Heap (Node Engine)** | 41.30 MB (used: 35.12 MB) | **38.90 MB** (used: 31.20 MB) | **Worker B gọn hơn** |
+| Hạng mục Đo đạc | Worker A: `dsh` (DeepSeek V4.1) | Worker B: `mini` (DeepSeek V4.1) | Worker C: `opencode` (GLM 5.3) | Worker D: `agy` (Gemini 3.8) | Đánh giá & Ưu thế |
+|---|---|---|---|---|---|
+| **Độ phủ Unit tests (Vitest)** | 146 tests / 17 files (1.02s) | 102 tests / 12 files (19.30s) | **142 tests / 14 files (3.26s)** | 51 tests / 12 files (1.19s) | **Worker A & C vượt trội về độ dày test** |
+| **Độ phủ E2E (Playwright)** | 19 tests (58.3s) | 18 tests (34.2s) | **23 tests (45.5s)** | 3 suites tổng hợp (21.4s) | **Worker C bao quát kịch bản sâu nhất** |
+| **Tỷ lệ 18 Gates (T01–T18)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | Cả 4 đều vượt qua 100% gates |
+| **Lỗi Console (0 Error)** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | Tuyệt đối sạch trên cả 4 |
+| **Kích thước Bundle JS chính** | 500.0 kB (152.1 kB gzip) | 434.0 kB (133.0 kB gzip) | **344.6 kB (106.4 kB gzip)** | 463.6 kB (134.0 kB gzip) | **Worker C tối ưu bundle gọn nhất** |
+| **Tổng dung lượng Assets** | 788 KiB | ~720 KiB | **~614 KiB** | ~680 KiB | **Worker C nhẹ nhất** |
+| **Procedural Audio API** | Có (3 map BGM, 9 SFX) | Có (BGM ngũ cung, SFX) | Có (3 map BGM, 8 SFX) | Có (3 map BGM, SFX) | 100% không asset ngoài tải chậm |
+| **Mô phỏng 500 quái (T12)** | 0.063 ms/step | 0.065 ms/step | **0.0139 ms/step** | 0.1345 ms/step | **Worker C tốc độ mô phỏng nhanh nhất** |
+| **Đỉnh RAM JS Heap Browser** | 95.70 MB | 88.40 MB | **~10 MB (9.54 MB)** | **~10 MB (9.54 MB)** | **Worker C & D tối ưu RAM cực tốt** |
+| **FPS Headless Chromium** | ~18 FPS (1% low 13) | ~7.5 FPS (1% low 6.6) | **23.4 FPS (1% low 17.6)** | 20.0 FPS (1% low 8.57) | Đo thật SwiftShader không khai khống |
+| **Cổng Preview trực tiếp VPS** | `:39101` | `:39102` | `:39103` | `:39104` | Sẵn sàng trải nghiệm |
 
-### 2. So sánh Tổng quát Mạnh — Yếu 2 Bên
+### 2. So sánh Đặc tính Kỹ thuật 4 Bên
 
-#### Worker A: `@deepseek-ai/dsh`
-* **Điểm mạnh:**
-  - **Khả năng tự chủ và tự sửa lỗi (Self-healing) xuất sắc:** Khi gặp ca khó (i-frame bất tử làm kẹt kịch bản test, đè lớp giao diện modal), `dsh` tự viết file chẩn đoán `.dbg.mjs`, lần ra tận gốc vấn đề trong core game và tự bổ sung API gỡ lỗi mà không cần can thiệp bên ngoài.
-  - **Bộ test chất lượng cao, chạy siêu tốc:** 146 unit tests hoàn thành chỉ trong **1.02 giây** (nhờ kiến trúc mock sạch, độc lập), cùng 19 bài test E2E Playwright bao quát sâu cả thao tác kéo chuột và cảm ứng.
-  - **Đồ họa và UI hoàn thiện không tì vết:** Bách Yêu Đồ thiết kế dạng Master-Detail chuyên nghiệp, 11 yêu thú đều có hình khối vector vẽ tay riêng biệt và đủ thông số. Màn hình Bại trận hiển thị chi tiết toàn bộ 9 kỹ năng đã build, hệ số quái và kỷ lục sống sót.
-  - **Quy trình đóng gói tự động hóa mẫu mực:** Tích hợp trọn gói pipeline kiểm thử và xuất báo cáo chỉ bằng một lệnh duy nhất (`npm run verify` hoặc `npm run artifacts`).
-* **Điểm yếu:**
-  - **Tốn nhiều bước suy luận (steps):** Mất tổng cộng 826 steps qua 5 giai đoạn (nhiều hơn Worker B 46%), do agent có xu hướng kiểm tra đi kiểm tra lại rất kỹ.
-  - **Kích thước bundle lớn hơn:** File JS chính chạm ngưỡng 500 kB (vừa khít cảnh báo của Vite, trong khi Worker B chỉ 434 kB).
-  - **Mức chiếm dụng bộ nhớ nhỉnh hơn:** Đỉnh RAM trình duyệt đo được là 95.7 MB (Worker B là 88.4 MB).
+#### Worker A: `@deepseek-ai/dsh` (DeepSeek V4.1 Flash)
+* **Thế mạnh:** Tự chủ và tự gỡ lỗi (Self-healing) xuất sắc; tự viết script `.dbg.mjs` chẩn đoán lỗi sâu trong core/DOM/audio; test suite Vitest mock sạch chạy siêu tốc (1.02s); UI Master-Detail và vector silhouette hoàn thiện không lỗi layout; đóng gói CI/CD 1 lệnh (`npm run verify`).
+* **Hạn chế:** Tốn nhiều bước suy luận (826 steps / 5 phase do tính cầu toàn lặp lại); bundle lớn hơn (~500 kB JS).
 
-#### Worker B: `mini-swe-agent`
-* **Điểm mạnh:**
-  - **Tiết kiệm bước và chi phí token vượt trội:** Hoàn thành toàn bộ 5 giai đoạn chỉ với **564 steps** (nhanh và tiết kiệm bước hơn Worker A gần 32%).
-  - **Tối ưu hóa bundle và tài nguyên tốt:** File JS chính chỉ nặng **434 kB** (nhỏ hơn Worker A ~13%), đỉnh RAM trình duyệt thấp hơn (~88.4 MB), bundle nhẹ và tải nhanh.
-  - **Mỹ thuật Tiên hiệp và Văn phong nhập vai ấn tượng:** Tàng Kinh Các sáng tạo vượt bậc với hệ thống 12 icon chữ Hán thư pháp đổi màu theo nguyên tố; câu từ tu chân bản địa hóa xuất sắc kèm chú thích công năng công thái học (`Tái Khởi (Restart)`, `Đắc Đạo Thăng Thiên (Về Menu)`).
-* **Điểm yếu:**
-  - **Tự chủ môi trường kém hơn:** Có giai đoạn bị mất phương hướng workspace (tự ý tạo `/tmp/p1` để clone git), lệnh kết thúc bị lỗi cú pháp exit code -1 phải nhờ Lead dọn dẹp.
-  - **Tốc độ chạy test rất chậm:** 102 unit tests mất tới **19.3 giây** (chậm hơn Worker A gần 19 lần) do chưa tối ưu mock bộ nhớ và dính cảnh báo localStorage của Node.
-  - **Sót lỗi giao diện (UI bugs):** Màn hình Bách Yêu Đồ bị tràn thanh cuộn che khuất 4 quái đầu tiên và thiếu chỉ số tấn công; bảng Cài đặt bị đặt thừa nút Mute bên cạnh checkbox.
+#### Worker B: `mini-swe-agent` (DeepSeek V4.1 Flash)
+* **Thế mạnh:** Tốc độ thực thi chớp nhoáng, tiết kiệm token/bước vượt trội (564 steps / 5 phase, ít hơn ~32%); bundle gọn nhẹ (434 kB); mỹ thuật chữ Hán thư pháp độc đáo; văn phong bản địa hóa tu chân kèm chú thích công thái học (`(Restart)`, `(Về Menu)`).
+* **Hạn chế:** Tự chủ môi trường kém hơn (từng lạc workspace sang `/tmp`); chạy unit test chậm (19s do cảnh báo localStorage); sót lỗi tràn thanh cuộn che quái ở Bestiary.
 
-### 3. Tiêu chuẩn Lựa chọn / Định tuyến cho Lead (Routing Decision)
+#### Worker C: `opencode` (GLM-5.3-Flash)
+* **Thế mạnh:** **Tối ưu hóa bundle và hiệu năng mô phỏng vô địch**: bundle JS chính chỉ **344.6 kB** (gọn nhất trong cả 4 bên); thời gian mô phỏng mỗi step chỉ **0.0139 ms** (nhanh gấp 4.5 lần Worker A); bộ test E2E phong phú nhất (23 Playwright tests); tự động nhận diện và sửa lỗi bất đồng bộ của engine PixiJS.
+* **Hạn chế:** Cần chặn cờ `--variant minimal` ngay từ đầu để tránh việc mô hình suy nghĩ quá sâu vượt trần 32.000 reasoning tokens của BigModel.
+
+#### Worker D: `agy` (Google Antigravity Native — Gemini 3.8 Flash)
+* **Thế mạnh:** **Đồ họa chiến đấu và giao diện UI đẹp mắt, hiện đại nhất**: hệ thống vòng tròn radar/trận pháp Bát Quái phân tầng biểu thị tầm đánh tự động; đạn đạo kiếm khí phát sáng neon; tự động bổ sung culling tối ưu khung hình; hoàn thành bài toán nhanh gọn và kỷ luật.
+* **Hạn chế:** Phụ thuộc vào cơ chế xác thực Google OAuth (keyring/interactive auth); bộ test unit bao quát vừa đủ theo brief (51 tests) chứ không tự viết dày đặc như A hay C.
+
+### 3. Tiêu chuẩn Định tuyến Lead (Routing Decision)
 * **Chọn Worker A (`dsh`):** Khi cần xây dựng logic phức tạp, hệ thống engine lõi đòi hỏi test suite đồ sộ, chạy CI/CD tốc độ cao và cần UI hoàn chỉnh thương mại.
-* **Chọn Worker B (`mini-swe-agent`):** Khi cần triển khai tính năng nhanh gọn, tiết kiệm chi phí gọi mô hình LLM, và tối ưu dung lượng cho web/mobile nhẹ nhàng.
+* **Chọn Worker B (`mini`):** Khi cần triển khai tính năng nhanh gọn, tiết kiệm chi phí gọi mô hình LLM, và tối ưu dung lượng cho web/mobile nhẹ nhàng.
+* **Chọn Worker C (`opencode` + GLM 5.3):** Khi cần tối ưu dung lượng bundle ở mức tối đa, logic toán học/mô phỏng hiệu năng cực cao và viết test suite bao quát sâu.
+* **Chọn Worker D (`agy` + Gemini 3.8):** Khi cần thẩm mỹ giao diện cao cấp, đồ họa chiến đấu trực quan, xử lý context lớn và hệ thống an toàn đa tầng của Google.
 
