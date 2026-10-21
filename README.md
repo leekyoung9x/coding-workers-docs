@@ -6,7 +6,7 @@ Các **Dedicated Worker CLI** sở hữu coding loop độc lập (quản lý re
 
 ---
 
-## 1. Kiến trúc Tổng thể (7 Workers)
+## 1. Kiến trúc Tổng thể (8 Workers)
 
 ```text
                         ┌──────────────→ Muse Code CLI (muse)
@@ -70,8 +70,9 @@ Mỗi worker được tối ưu hóa cho các nhóm tác vụ và ngữ cảnh c
 | **mini-SWE-agent** (`mini`) | DeepSeek V4.1 Flash (`thtung-paid`) | **Tốc độ thực thi chớp nhoáng & Siêu tiết kiệm token/bước**. Hoàn thành task ít hơn 30–40% số bước (564 steps / 5 phase); bundle production cực kỳ gọn nhẹ (~434 kB); mỹ thuật chữ Hán thư pháp sáng tạo; văn phong bản địa hóa tu chân kèm chú thích công thái học (`(Restart)`, `(Về Menu)`). | Tự chủ môi trường yếu hơn (dễ lạc workspace sang `/tmp` nếu không khóa `cd "$WS"`), chạy test Vitest chậm (19s do mock/warnings), dễ sót lỗi layout CSS nhỏ. | Triển khai tính năng nhanh, bugfix gọn (20–34s), task song song số lượng lớn (bulk/parallel), tối ưu bundle nhẹ cho web/mobile. |
 | **OpenCode** (`opencode`) | GLM-5.3-Flash (`thtung-glm`) | **Vô địch tối ưu Bundle JS (344.6 kB), Tốc độ mô phỏng cực hạn (0.0139 ms/step) & Test E2E đồ sộ**. Dùng cơ chế zero-allocation in-place compaction (`compactInPlace`); bộ test Playwright sâu nhất (23 tests bao quát đa dạng kịch bản); token rẻ nhất qua 9Router. | Cần cấu hình cờ `--variant minimal` để tránh bẫy suy nghĩ quá sâu làm cạn trần 32.000 output tokens của GLM 5.3. | Frontend / Web Game khắt khe về bundle (<350 kB), thuật toán toán học/mô phỏng tải nặng cần Zero-GC, hoặc viết test E2E chuyên sâu. |
 | **Antigravity** (`agy`) | Gemini 3.8 Flash (`thtung-agy`) | **Thẩm mỹ UI/UX hiện đại đẳng cấp commercial indie & Đồ họa chiến đấu bóng bẩy**. Container translucent glass bo góc mượt mà; vòng radar/trận pháp Bát Quái phân tầng hiển thị tầm đánh tự động; đạn đạo neon phát sáng; context 1M+ tokens; tự động xoay tua 3 tài khoản Google OAuth chống 429. | CLI yêu cầu xác thực Google OAuth native; số lượng unit test ở mức cô đọng theo brief (51 tests) thay vì viết dày đặc. | Giao diện thương mại hiện đại, đồ họa chiến đấu trực quan, rà soát/refactor codebase đồ sộ hoặc tác vụ đa phương thức (ảnh/video). |
-| **Claude Code** (`claude`) | Claude Sonnet 4.6 / Opus 4.6 (XQ API) | **Phân tích codebase đa file sắc bén, viết tài liệu kỹ thuật & refactor sạch**. Hiểu cấu trúc repo nhanh, viết code mẫu mực theo chuẩn TypeScript / Python hiện đại. | Bị giới hạn context thực đo ~80K tokens qua XQ API (truncate âm thầm nếu vượt quá); chỉ hỗ trợ chế độ one-shot qua wrapper. | Review PR, refactor module, viết tài liệu kiến trúc, task coding trung bình cần code style cao cấp. |
-| **OpenAI Codex** (`codex`) | GPT-5.6 Luna (`thtung-gpt`) | **Tuân thủ spec nghiêm ngặt, rà soát edge-case & bảo mật**. Sinh testcase biên chính xác, phát hiện lỗ hổng logic/dữ liệu theo phong cách chuẩn OpenAI. | Khởi động cần tắt websocket (`supports_websockets = false`), ít linh hoạt trong môi trường shell tự do. | Viết test edge-case, kiểm tra bảo mật, audit API và refactor logic theo đặc tả chặt chẽ. |
+| **Claude Code** (`claude`) | DeepSeek V4.1 Flash (`thtung-paid` qua 9Router Anthropic API) | **Vô địch tuyệt đối về độ phủ kiểm thử (284 unit tests, 60 E2E tests) & Tự chẩn đoán sâu**. Tự phát hiện và sửa lệch sprite hitbox formula, tự thêm texture quái triệu hồi chống crash ticker, tạo cơ chế "boss arena" dọn quái thường để đòn đánh không bị loãng; thời gian step 0.266 ms; pass trọn vẹn 18/18 gates. | Cần cờ `IS_SANDBOX=1` để bypass root check; thời gian chạy bộ test đồ sộ kéo dài hơn các worker khác. | Dự án quy mô lớn đòi hỏi kiểm thử bao quát tối đa (Regression Safety), tự tìm và sửa các lỗi boundary conditions sâu. |
+| **Kimi Code** (`kimi`) | Kimi K3 (`thtung-kimi` qua 9Router OpenAI API) | **Kỷ luật quản lý tác vụ (TodoList) xuất sắc & Thuật toán mô phỏng siêu tốc (0.038 ms/step)**. Tự quản lý danh mục tác vụ qua TodoList tool; 180 unit tests + 20 E2E tests pass 100%; giao diện Flat Card thanh thoát; hiển thị lượng máu trực tiếp và thanh máu phụ trên đầu nhân vật. | Nhạy cảm với timeout khi hệ thống chịu tải cao; cần cấu hình chuẩn `config.toml` trỏ về loopback 9Router. | Chia nhỏ task nhiều bước theo quy trình TodoList chặt chẽ, tối ưu thuật toán game/mô phỏng tải nặng, giao diện thẻ tinh tế. |
+| **OpenAI Codex** (`codex`) | DeepSeek V4.1 Flash (`thtung-paid` qua 9Router Responses API) | **Tự chủ shell cao độ & Tính toán cân bằng toán học chính xác (Endless Scaling)**. Tự tính toán và debug công thức scale quái vật lũy tiến trong Endless Mode; 128 unit tests + 22 Playwright tests pass 100%; bundle JS rất gọn (381.5 kB); tốc độ step 0.138 ms. | Dễ tràn ngữ cảnh nếu nạp ảnh chụp màn hình thô (cần prompt chỉ thị cấm nạp base64 image vào context). | Tự chủ dòng lệnh shell, triển khai các thuật toán cân bằng chỉ số toán học lũy tiến (Endless scaling) và giữ kích thước bundle tối giản. |
 
 
 ---
@@ -94,6 +95,7 @@ Mỗi worker được tối ưu hóa cho các nhóm tác vụ và ngữ cảnh c
 | **Claude Code CLI** | `/usr/local/bin/claude` | `/usr/local/bin/claude` | 2.1.295 | Anthropic Claude Code CLI (gọi qua wrapper XQ, không dùng key Anthropic) |
 | **claude-xq-wrapper** | `/poki/coding-workers-docs/claude-xq-wrapper.py` | N/A | 1.0.1 | Python wrapper gọi XQ API (key từ env/file, limit ~80K tokens) |
 | **Antigravity CLI** | `/root/.local/bin/agy` | `~/.local/bin/agy` | 1.2.3 | Google Antigravity CLI, hỗ trợ Gemini 3.8 / Claude Opus |
+| **Kimi Code CLI** | `/root/.kimi-code/` (global npm) | `kimi` (npm `@moonshot-ai/kimi-code`) | 2.3.0 | CLI tự chủ của Moonshot AI, hỗ trợ Kimi K3 qua OpenAI provider |
 
 ---
 

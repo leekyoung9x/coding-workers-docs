@@ -101,27 +101,26 @@ Top configs mới lên full 113.
 
 ---
 
-## Benchmark Đối đầu Thực tế Toàn diện: 5 Workers (Vạn Kiếp Tu Tiên P1–P5)
+## Benchmark Đối đầu Thực tế Toàn diện: 8 Workers (Vạn Kiếp Tu Tiên P1–P5)
 
 *Ngày thực hiện: 2026-10-20*  
 *Môi trường: Linux VPS Ubuntu (66.135.0.13), Node.js LTS 26.8.2, PixiJS v8.22.0, Vite 6, TypeScript strict, Vitest, Playwright*  
 *Nhiệm vụ: Phát triển trọn vẹn game roguelite 2D top-down "Vạn Kiếp Tu Tiên" từ cùng starter repository sạch qua 5 giai đoạn (P1–P5) đạt chuẩn 18 gates kỹ thuật (T01–T18).*
 
-### 1. Bảng số liệu đo lường định lượng chung cuộc (5 Workers)
+### 1. Bảng số liệu đo lường định lượng chung cuộc (8 Workers)
 
-| Hạng mục Đo đạc | Worker A: `dsh` (DeepSeek V4.1) | Worker B: `mini` (DeepSeek V4.1) | Worker C: `opencode` (GLM 5.3) | Worker D: `agy` (Gemini 3.8) | Worker E: `muse` (Muse Spark 1.3 Contributor) | Đánh giá & Ưu thế |
-|---|---|---|---|---|---|---|
-| **Độ phủ Unit tests (Vitest)** | 146 tests / 17 files (1.02s) | 102 tests / 12 files (19.30s) | 142 tests / 14 files (3.26s) | 51 tests / 12 files (1.19s) | **107 tests / 16 files (2.74s)** | Worker A & C dày nhất; E cân bằng test/tốc độ |
-| **Độ phủ E2E (Playwright)** | 19 tests (58.3s) | 18 tests (34.2s) | **23 tests (45.5s)** | 3 suites tổng hợp (21.4s) | 9 tests (28.3s) | Worker C sâu nhất; E bao quát 22 tiêu chí |
-| **Tỷ lệ 18 Gates (T01–T18)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | **18 / 18 PASS (100%)** | Cả 5 đều hoàn thành 100% chuẩn chỉ |
-| **Lỗi Console (0 Error)** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | Tuyệt đối sạch trên cả 5 |
-| **Kích thước Bundle JS chính** | 500.0 kB (152.1 kB gzip) | 434.0 kB (133.0 kB gzip) | **344.6 kB (106.4 kB gzip)** | 463.6 kB (134.0 kB gzip) | **366.3 kB (114.7 kB gzip)** | Worker C nhẹ nhất; Worker E đứng thứ hai |
-| **Tổng dung lượng Assets** | 788 KiB | ~720 KiB | **~614 KiB** | ~680 KiB | **~656 KiB** | Worker C & E tối ưu dung lượng tốt nhất |
-| **Procedural Audio API** | Có (3 map BGM, 9 SFX) | Có (BGM ngũ cung, SFX) | Có (3 map BGM, 8 SFX) | Có (3 map BGM, SFX) | **Có (3 map BGM, 9 SFX)** | 100% không asset ngoài tải chậm |
-| **Mô phỏng 500 quái (T12)** | 0.063 ms/step | 0.065 ms/step | **0.0139 ms/step** | 0.1345 ms/step | 0.0530 ms/step (p99 0.311) | Worker C vô địch; Worker E ổn định dưới 0.1ms |
-| **Đỉnh RAM JS Heap Browser** | 95.70 MB | 88.40 MB | **~10 MB (9.54 MB)** | **~10 MB (9.54 MB)** | **42.63 MB** | Worker C & D nhẹ nhất; E cân đối đồ họa/RAM |
-| **FPS Headless Chromium** | ~18 FPS (1% low 13) | ~7.5 FPS (1% low 6.6) | 23.4 FPS (1% low 17.6) | 20.0 FPS (1% low 8.57) | **59.9 FPS (1% low 29.9)** | Worker E frame rate mượt mà và ổn định nhất |
-| **Cổng Preview trực tiếp VPS** | `:39101` | `:39102` | `:39103` | `:39104` | **`:39105`** | Sẵn sàng trải nghiệm cả 5 bản |
+| Hạng mục Đo đạc | Worker A: `dsh` (DS V4.1) | Worker B: `mini` (DS V4.1) | Worker C: `opencode` (GLM 5.3) | Worker D: `agy` (Gemini 3.8) | Worker E: `muse` (Muse Contrib) | Worker F: `claude` (DS V4.1) | Worker G: `kimi` (Kimi K3) | Worker H: `codex` (DS V4.1) |
+|---|---|---|---|---|---|---|---|---|
+| **Độ phủ Unit tests (Vitest)** | 146 tests (1.02s) | 102 tests (19.3s) | 142 tests (3.26s) | 51 tests (1.19s) | 107 tests (2.74s) | **284 tests (kỷ lục)** | 180 tests (1.2s) | 128 tests (3.25s) |
+| **Độ phủ E2E (Playwright)** | 19 tests (58.3s) | 18 tests (34.2s) | 23 tests (45.5s) | 3 suites (21.4s) | 9 tests (28.3s) | **60 tests (đồ sộ nhất)** | 20 tests (32.7s) | 22 tests (54.6s) |
+| **Tỷ lệ 18 Gates (T01–T18)** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** | **18/18 PASS** |
+| **Lỗi Console (0 Error)** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | **0 errors** | **0 errors** |
+| **Bundle JS chính** | 500.0 kB | 434.0 kB | **344.6 kB (gọn nhất)** | 463.6 kB | 366.3 kB | 436.8 kB | 415.8 kB | 381.5 kB |
+| **Procedural Audio API** | Có (3 BGM, 9 SFX) | Có (BGM, SFX) | Có (3 BGM, 8 SFX) | Có (3 BGM, SFX) | Có (3 BGM, 9 SFX) | Có (3 BGM, 8 SFX) | Có (3 BGM, 16 SFX) | Có (3 BGM, SFX) |
+| **Mô phỏng 500 quái (T12)** | 0.063 ms/step | 0.065 ms/step | **0.0139 ms/step** | 0.1345 ms/step | 0.0530 ms/step | 0.2660 ms/step | **0.0380 ms/step** | 0.1380 ms/step |
+| **Đỉnh RAM JS Heap** | 95.7 MB | 88.4 MB | **9.54 MB** | **9.54 MB** | 42.6 MB | 26.3 MB | 16.3 MB | 80.2 MB |
+| **FPS Headless Chromium** | ~18 FPS | ~7.5 FPS | 23.4 FPS | 20.0 FPS | **59.9 FPS (mượt nhất)** | ~14 FPS | ~15 FPS | ~6.0 FPS |
+| **Cổng Preview / Subpath** | `:39101` (`/worker-a/`) | `:39102` (`/worker-b/`) | `:39103` (`/worker-c/`) | `:39104` (`/worker-d/`) | `:39105` (`/worker-e/`) | `:39106` (`/worker-f/`) | `:39107` (`/worker-g/`) | `:39108` (`/worker-h/`) |
 
 ### 2. So sánh Đặc tính Kỹ thuật 5 Bên
 
@@ -149,10 +148,26 @@ Top configs mới lên full 113.
   - Tốc độ render Chromium headless đạt **59.9 FPS** (1% low 29.9 FPS), thời gian step **0.053 ms**, dung lượng bundle JS đứng thứ 2 (**366.3 kB**).
 * **Hạn chế:** Bắt buộc phải khóa cứng model `muse-spark-1.3-contributor` và cờ `--yolo` để tránh kẹt hàng đợi phê duyệt lệnh headless.
 
+
+#### Worker F: `claude` CLI (DeepSeek V4.1 Flash qua 9Router Messages API)
+* **Thế mạnh:** **Vô địch tuyệt đối về độ phủ kiểm thử**: **284 unit tests** + **60 Playwright tests** (gấp 2-3 lần các worker thông thường). Cơ chế tự chẩn đoán sâu: tự phát hiện và sửa lệch sprite hitbox formula, tự thêm texture cho minion triệu hồi (sapling, clone) chống crash ticker, tạo cơ chế "boss arena" dọn quái thường để tránh loãng đòn đánh.
+* **Hạn chế:** Tốc độ thực thi trung bình do chạy test suite quá đồ sộ; cần cờ `IS_SANDBOX=1` để bỏ qua root check của Claude Code.
+
+#### Worker G: `kimi` CLI (@moonshot-ai/kimi-code v2.3.0 + Kimi K3)
+* **Thế mạnh:** **Tự quản lý tác vụ (Task Planning) cực kỳ kỷ luật**: dùng TodoList tool tự phân rã và cập nhật trạng thái liên tục; mô phỏng logic cực nhanh (**0.038 ms/step**); giao diện Flat Card thanh thoát, quái vật có hiển thị lượng máu trực tiếp (HP 10), thanh máu phụ trên đầu nhân vật (overhead HP bar).
+* **Hạn chế:** Nhạy cảm với timeout của tool khi hệ thống chịu tải cao; cần cấu hình chuẩn `config.toml` trỏ về loopback 9Router.
+
+#### Worker H: `codex` CLI (OpenAI Codex v0.158.0 + DeepSeek V4.1 qua Responses API)
+* **Thế mạnh:** **Khả năng tự chủ trong môi trường shell và tính toán toán học chính xác**: tự tính toán công thức scale quái vật lũy tiến trong Endless Mode, tốc độ mô phỏng nhanh (**0.138 ms/step**), bundle rất gọn (**381.5 kB**), tự động cấu hình test runner độc lập với 128 unit tests và 22 Playwright tests.
+* **Hạn chế:** Dễ bị tràn ngữ cảnh token nếu gọi tool `view_image` tải ảnh base64 thô (cần prompt chỉ thị cấm nạp ảnh thô vào context).
+
 ### 3. Tiêu chuẩn Định tuyến Lead (Routing Decision)
 * **Chọn Worker A (`dsh`):** Khi cần xây dựng logic phức tạp, hệ thống engine lõi đòi hỏi test suite đồ sộ, chạy CI/CD tốc độ cao và cần UI hoàn chỉnh thương mại.
 * **Chọn Worker B (`mini`):** Khi cần triển khai tính năng nhanh gọn, tiết kiệm chi phí gọi mô hình LLM, và tối ưu dung lượng cho web/mobile nhẹ nhàng.
 * **Chọn Worker C (`opencode` + GLM 5.3):** Khi cần tối ưu dung lượng bundle ở mức tối đa, logic toán học/mô phỏng hiệu năng cực cao và viết test suite bao quát sâu.
 * **Chọn Worker D (`agy` + Gemini 3.8):** Khi cần thẩm mỹ giao diện cao cấp, đồ họa chiến đấu trực quan, xử lý context lớn và hệ thống an toàn đa tầng của Google.
 * **Chọn Worker E (`muse` + Muse Spark 1.3 Contributor):** Khi cần thiết kế UI công thái học đỉnh cao, bố cục game khoa học, frame rate mượt mà và khả năng tự phát hiện lỗi logic sâu trong vòng lặp game.
+* **Chọn Worker F (`claude` + DeepSeek V4.1):** Khi cần xây dựng hệ thống quy mô lớn đòi hỏi kiểm thử bao quát tối đa (Regression Safety), tự tìm và sửa các lỗi lệch hitbox, boundary conditions sâu.
+* **Chọn Worker G (`kimi` + Kimi K3):** Khi dự án cần lập trình theo quy trình TodoList chặt chẽ, chia nhỏ task, tối ưu tốc độ thuật toán mô phỏng (0.038 ms/step) và UI gọn gàng.
+* **Chọn Worker H (`codex` + DeepSeek V4.1):** Khi cần tự chủ dòng lệnh shell, triển khai các thuật toán cân bằng chỉ số toán học lũy tiến (Endless scaling) và giữ kích thước bundle tối giản.
 
