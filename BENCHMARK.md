@@ -190,3 +190,25 @@ Khi nâng cấp lên Giai đoạn P6 (Engine & Visual Foundation), cả 8 worker
 3. **Chỉ số % Skill Adoption:**
    $$\text{Skill Adoption Rate} = \frac{\text{Số lượng Skill thực sự áp dụng}}{\text{Tổng số Skill liên quan (12 core skills)}} \times 100\%$$
 Worker nào có tỷ lệ áp dụng cao nhất kèm chất lượng game mượt mà, không lỗi sẽ được cộng điểm trực tiếp vào bảng xếp hạng P6!
+
+---
+
+## 5. Tiêu Chuẩn Đánh Giá Mới Cho Giai Đoạn P6: Đo Đạc Độ Phủ GSAP Motion & Pixi-Filters Shader
+
+Bên cạnh tỷ lệ áp dụng Pixi Skills, Giai đoạn P6 thiết lập bộ tiêu chuẩn đo lường định lượng cụ thể xem từng worker áp dụng được bao nhiêu % tính năng của `gsap` và `pixi-filters`:
+
+### 5.1. Thang Điểm GSAP Motion Quality (100%):
+- **Level-up Stagger & Ease:** 3 thẻ nâng cấp bay nảy `back.out(1.7)`, hover scale `1.05` (**20%**).
+- **Floating Combat Text Pool:** Số sát thương thường mờ dần, Bạo kích nảy tung vàng kim, quản lý qua Object Pool (**20%**).
+- **Tweening Thanh Máu & XP:** Ghost Health Bar đọng vệt đỏ, thanh XP cuộn mượt mà (**20%**).
+- **Scene Transition:** Chuyển cảnh Victory / Defeat mờ tối mượt mà kèm tiêu đề rơi uy lực (**20%**).
+- **Lifecycle Cleanliness:** Hủy tween triệt để bằng `gsap.killTweensOf`, 0 rò rỉ bộ nhớ tween (**20%**).
+
+### 5.2. Thang Điểm Pixi-Filters Shader Quality (100%):
+- **GlowFilter:** Hào quang phát sáng bloom trên kiếm khí, sấm sét, đạn đạo (**20%**).
+- **OutlineFilter:** Viền nét hoạt họa Anime/Chibi (1.5px) quanh nhân vật, quái và đại boss (**20%**).
+- **DropShadowFilter:** Bóng đổ mềm chân nhân vật/quái và bóng nổi khối cho Action Bar/HUD (**20%**).
+- **Screen Flash & Low HP Warning:** Lóe sáng khi boss ra chiêu nộ, nhấp nháy đỏ khi máu < 20% (**20%**).
+- **Layering Architecture:** Gắn filter tập trung theo Container/RenderLayer, cấm gắn lẻ tẻ lên từng sprite (**20%**).
+
+Cả hai bảng điểm này sẽ được Lead Orchestrator đối soát trực tiếp qua AST, Playwright tests và báo cáo trong kết quả chung cuộc P6!
