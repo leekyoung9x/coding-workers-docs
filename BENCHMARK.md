@@ -171,3 +171,22 @@ Top configs mới lên full 113.
 * **Chọn Worker G (`kimi` + Kimi K3):** Khi dự án cần lập trình theo quy trình TodoList chặt chẽ, chia nhỏ task, tối ưu tốc độ thuật toán mô phỏng (0.038 ms/step) và UI gọn gàng.
 * **Chọn Worker H (`codex` + DeepSeek V4.1):** Khi cần tự chủ dòng lệnh shell, triển khai các thuật toán cân bằng chỉ số toán học lũy tiến (Endless scaling) và giữ kích thước bundle tối giản.
 
+
+---
+
+## 4. Tiêu Chuẩn Đánh Giá Mới Cho Giai Đoạn P6: Tỷ Lệ Áp Dụng PixiJS AI Skills (% Skill Utilization)
+
+Khi nâng cấp lên Giai đoạn P6 (Engine & Visual Foundation), cả 8 worker đều được cung cấp thư mục `./skills/` chứa đầy đủ 26 AI Skills chính thức của PixiJS v8 (`https://github.com/pixijs/pixijs-skills`).
+
+### Phương Pháp Đo Lường & Chấm Điểm Thực Tiễn:
+1. **Không chấm điểm hình thức:** Không chấp nhận việc agent chỉ copy thư mục skill vào mà không dùng.
+2. **Đối soát AST / Grep Codebase:** Lead Orchestrator quét mã nguồn để kiểm tra các API patterns đặc trưng của từng skill:
+   - `pixijs-scene-sprite` -> Sử dụng `NineSliceSprite` dựng khung panel RPG.
+   - `pixijs-filters` -> Sử dụng `Filter.from` và `pixi-filters@^6` trên `Container`/`RenderLayer` tập trung.
+   - `pixijs-scene-container` -> Sử dụng `isRenderGroup`, `zIndex`, `boundsArea`, `cullable`.
+   - `pixijs-performance` -> Gọi `destroy({ children: true, texture: false })`, pooling objects.
+   - `pixijs-ticker` -> Sử dụng `ticker.add`, điều phối `deltaTime` và thứ tự ưu tiên render.
+   - `pixijs-events` -> Sử dụng `eventMode = 'static'`, `hitArea`, cơ chế pointer drag-to-move.
+3. **Chỉ số % Skill Adoption:**
+   $$\text{Skill Adoption Rate} = \frac{\text{Số lượng Skill thực sự áp dụng}}{\text{Tổng số Skill liên quan (12 core skills)}} \times 100\%$$
+Worker nào có tỷ lệ áp dụng cao nhất kèm chất lượng game mượt mà, không lỗi sẽ được cộng điểm trực tiếp vào bảng xếp hạng P6!
