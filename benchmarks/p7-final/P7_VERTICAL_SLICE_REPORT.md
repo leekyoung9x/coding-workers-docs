@@ -22,6 +22,16 @@ Worker F đã xuất sắc hoàn tất trọn vẹn **toàn bộ 37 Gates (T01 �
 
 ## 2. CHI TIẾT SẢN PHẨM BÀN GIAO VERTICAL SLICE (THANH VÂN KIẾM SĨ)
 
+Toàn bộ các action đều được sinh ra từ các **Keyframe Action Poses RIÊNG BIỆT do Model AI vẽ qua ComfyUI**, không phải dùng 1 ảnh tĩnh scale/xoay giả lập:
+* **`attack1` (Trảm Kích Kiếm Khí):**
+  - **F1 (Wind-up):** Model AI vẽ tư thế tụ lực lùi tấn (*gongbu*), hai tay nắm chuôi kiếm giương chéo qua vai chuẩn bị vung chém.
+  - **F2 (Lunge Step):** Bước chân lao tới dồn trọng tâm.
+  - **F3 (Strike Impact - Hit 220ms):** Model AI vẽ tư thế hạ thấp trọng tâm lao thẳng về phía trước, tay vung kiếm chém ngang uy lực, kiếm khí hình bán nguyệt rực sáng cùng các mảnh băng tinh thể phát tán.
+  - **F4 (Follow-through):** Kiếm vươn dài về phía trước, tà áo và dải tóc bay ngược chiều gió.
+  - **F5 & F6 (Recovery):** Thu thế kiếm trở về trạng thái thủ.
+* **`hurt` (Bị Thương):** Model AI vẽ tư thế giật nảy ra sau (*recoil*), ngực ưỡn ngửa, hai mắt nhắm nghiến vì đau đớn, hai tay bung rộng mất thế thủ.
+* **`die` (Tử Trận / Gục Ngã):** Model AI vẽ tư thế ngã gục xuống hai đầu gối, thân trên đổ sụp, tay trái chống yếu ớt xuống sàn, thanh đoản kiếm tuột khỏi bàn tay rơi xuống đất, ánh mắt mờ dần.
+
 | Thành phần | Đặc tả kỹ thuật | Kết quả nghiệm thu thực tế | Trạng thái |
 |---|---|---|---|
 | **Nhân vật** | `player_swordsman` (Thanh Vân Kiếm Sĩ) | Chibi Tiên hiệp tỉ lệ 1:2.5, áo bào thanh lam, tóc buộc trâm ngọc, tay cầm cổ kiếm | **ĐẠT** |
