@@ -1,5 +1,9 @@
 # Coding Workers — Hermes + 9Router / OpenRouter
 
+## Công cụ đã trang bị và quy tắc sử dụng
+
+- [Danh sách 22 mục và quy định Lead / Claude Code phải áp dụng theo nhiệm vụ](plans/INSTALLED_TOOLING_AND_USAGE_POLICY.md) — phân biệt cài đặt, smoke test và nghiệm thu; nêu rõ blocker, không ép sử dụng toàn bộ skill.
+
 ## Đánh giá công cụ theo vai trò
 
 - [Đánh giá 30 Skills / MCP / CLI cho Lead & Workers](plans/SKILLS_MCP_CLI_ROLE_EVALUATION.md) — đánh giá từng mục, phân quyền, kế hoạch pilot và bản gốc người dùng cung cấp. Đây là đề xuất, không phải danh sách đã cài đặt.
