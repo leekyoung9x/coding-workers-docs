@@ -67,7 +67,7 @@ Các ví dụ dưới đây là mục đích sử dụng trong Poki, **không ph
 
 **Mục đích:** cung cấp project template gồm agent roles, slash-command skills, hooks/rules và mẫu tài liệu để tổ chức một workflow game trong Claude Code: thiết kế, lập story, triển khai, review, QA và release checklist. Đây không phải model mới hay49 process tự chạy.
 
-**Trạng thái tại lần bổ sung tài liệu này:** pilot được giao trong `/poki/tooling/game-studios-pilot`, chưa xác nhận cài và nghiệm thu hoàn tất. Không cộng vào22 như một mục đã PASS, không chép đè cấu hình Poki. Upstream tập trung Unity/Godot/Unreal; chưa xác nhận hỗ trợ Pixi chuyên biệt.
+**Trạng thái cập nhật:** bản pilot riêng đã cài/cấu hình và qua smoke test; Lead đã đối chiếu số agent/skill và đọc output smoke thực tế. Có 49 agent definitions, 74 skills; discovery và project-stage-detect hoạt động, hook từ chối đọc nguyên file lớn được chứng minh trong harness. Chưa áp vào game Poki, không thay thế 22 mục. Upstream chỉ có engine enum Godot/Unity/Unreal, không có hỗ trợ Pixi; một số hook event chưa được thử. Xem [báo cáo đầy đủ và giới hạn](CLAUDE_CODE_GAME_STUDIOS_PILOT_RESULT.md).
 
 **Cách dùng dự kiến:** Hermes vẫn là Lead; studio agents là vai trò nội bộ của Claude. Phải nối vào task ledger chung, giữ model/session hiện tại và quyền nội dung game; không tạo hệ task/director thứ hai cạnh tranh. Hooks cần review; không phải OS sandbox. Chỉ chốt launch instructions sau khi pilot có bằng chứng.
 
