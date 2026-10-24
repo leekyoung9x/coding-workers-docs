@@ -1,5 +1,9 @@
 # Coding Workers — Hermes + 9Router / OpenRouter
 
+## Đánh giá công cụ theo vai trò
+
+- [Đánh giá 30 Skills / MCP / CLI cho Lead & Workers](plans/SKILLS_MCP_CLI_ROLE_EVALUATION.md) — đánh giá từng mục, phân quyền, kế hoạch pilot và bản gốc người dùng cung cấp. Đây là đề xuất, không phải danh sách đã cài đặt.
+
 Hermes đóng vai trò **Orchestrator**: quản lý session/context, giữ kết nối Discord, tích hợp Figma MCP (FULL), Unity MCP Pro (FULL), phân luồng công việc (routing), trích xuất design spec và kiểm định chất lượng cuối cùng (final verification). 
 
 Các **Dedicated Worker CLI** sở hữu coding loop độc lập (quản lý repository, tương tác shell, build/test/lint, tự sửa lỗi biên dịch).
