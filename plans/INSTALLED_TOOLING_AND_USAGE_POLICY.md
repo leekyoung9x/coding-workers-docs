@@ -71,7 +71,10 @@ Các ví dụ dưới đây là mục đích sử dụng trong Poki, **không ph
 
 **Cách dùng dự kiến:** Hermes vẫn là Lead; studio agents là vai trò nội bộ của Claude. Phải nối vào task ledger chung, giữ model/session hiện tại và quyền nội dung game; không tạo hệ task/director thứ hai cạnh tranh. Hooks cần review; không phải OS sandbox. Chỉ chốt launch instructions sau khi pilot có bằng chứng.
 
-## Quy định bắt buộc: dùng theo nhiệm vụ, không dùng cho đủ số
+## Vai trò reviewer (quy định bổ sung)
+- Reviewer là **nhiệm vụ tạm giao từng lần qua brief**, không phải chức danh cố định của bất kỳ worker/model/skill nào.
+- Mỗi brief review phải ghi rõ: worker nào, model nào, skill/tool nào bắt buộc + bằng chứng gọi. Không suy diễn từ các lần trước.
+- Worker được linh động chọn thêm tool ngoài danh sách bắt buộc nếu chứng minh được hiệu quả, nhưng **không được bỏ** tool bắt buộc.
 
 **Bắt buộc sử dụng năng lực phù hợp, không bắt buộc bật mọi công cụ trên mọi task.** Brief phải chọn tool/skill và lý do; kết quả có bằng chứng. Không thưởng tỷ lệ skill utilization. N/A phải có lý do cụ thể, không được âm thầm bỏ qua yêu cầu.
 
