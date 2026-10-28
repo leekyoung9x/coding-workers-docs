@@ -16,6 +16,7 @@ metadata:
 Operating protocol defining the boundaries, responsibilities, and bidirectional interaction between **Hermes (Lead Orchestrator)** and **Dedicated Coding Workers** (`muse-code`, `deepseek-code`/`dsh`, `mini`, `glm-code`, `agy-code`, `codex`).
 
 > Gates: `references/acceptance-verification.md`, `references/worker-supervision-and-gates.md`, `references/ui-regression-acceptance.md`.
+> Quy trình 7 bước + mapping bộ công cụ tối thiểu: `references/lead-7step-tool-mapping.md` — ĐỌC TRƯỚC MỌI TASK.
 > Choosing the right worker (mini/muse/glm/codex/agy/claude/dsh — commands + combos + strength matrix): see `references/worker-routing.md`. READ IT BEFORE EVERY DISPATCH — wrong worker = wrong billing.
 
 ## 1. Core Principle: Strict Role Separation
