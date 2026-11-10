@@ -17,6 +17,7 @@ Operating protocol defining the boundaries, responsibilities, and bidirectional 
 
 > Gates: `references/acceptance-verification.md`, `references/worker-supervision-and-gates.md`, `references/ui-regression-acceptance.md`.
 > Quy trình 7 bước + mapping bộ công cụ tối thiểu: `references/lead-7step-tool-mapping.md` — ĐỌC TRƯỚC MỌI TASK.
+> Gửi ảnh/screenshot vào Discord (MEDIA:, thư mục cho phép, kiểm tra gateway log): `references/sending-images-to-discord.md` — đọc khi owner bảo "cho xem hình".
 > Choosing the right worker (mini/muse/glm/codex/agy/claude/dsh — commands + combos + strength matrix): see `references/worker-routing.md`. READ IT BEFORE EVERY DISPATCH — wrong worker = wrong billing.
 
 ## 1. Core Principle: Strict Role Separation
